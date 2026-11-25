@@ -1,54 +1,61 @@
-# Downloads — S-Retorno 1.4.12
+# Downloads — S-Retorno e Central de Retornos
 
-| Download | Arquivo |
+## Instaladores recebidos: 1.5.1 / Central 0.1.1
+
+| Conteúdo | Download |
 | --- | --- |
-| Aplicativo para Android | [S-Retorno-1.4.12.apk](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.4.12/S-Retorno-1.4.12.apk) |
-| Código-fonte da versão | [S-Retorno-1.4.12-fonte.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/archive/refs/heads/versao-1.4.12.zip) |
-| Arquivos e checksum do aplicativo | [Ramo downloads-1.4.12](https://github.com/gedielsonsaramento/S-Retorno.apk/tree/downloads-1.4.12) |
-| Navegar no código da versão | [Ramo versao-1.4.12](https://github.com/gedielsonsaramento/S-Retorno.apk/tree/versao-1.4.12) |
+| Plugin para Spresenter 0.1.1 | [S-Retorno-Central-0.1.1.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-Central-0.1.1.zip) |
+| Aplicativo Android 1.5.1, plugin 0.1.1 e manual | [S-Retorno-1.5.1-Central-pacote.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-1.5.1-Central-pacote.zip) |
+| Manual da Central 0.1.1 | [MANUAL-DA-CENTRAL.md](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/MANUAL-DA-CENTRAL.md) |
+| Lista de integridade | [SHA256SUMS.txt](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/SHA256SUMS.txt) |
+| Pasta dos instaladores | [Ramo downloads-1.5.1](https://github.com/gedielsonsaramento/S-Retorno.apk/tree/downloads-1.5.1) |
 
-O GitHub gera o ZIP do código com o nome do repositório e do ramo. Ele contém o código próprio e as instruções de compilação; o APK fica separado no ramo de downloads. O SDK NDI, chaves de assinatura, credenciais e capturas privadas não fazem parte do ZIP do código.
+Os arquivos são os instaladores da **1.5.1 / Central 0.1.1** recebidos para publicação. O ZIP do pacote reúne o APK, o ZIP instalável do plugin e os manuais; ele não contém os fontes exatos da 1.5.1.
 
-**Novidade:** em **engrenagem → Relatar problema**, copie um relatório com o consumo do app. O servidor de suporte está em preparação; esta versão não envia métricas remotamente.
+## Projeto disponível: Android 1.5.2 / Central 0.1.2
+
+| Conteúdo | Link |
+| --- | --- |
+| Projeto completo com fontes, APK 1.5.2, Central 0.1.2 e manuais | [S-Retorno-1.5.2-Projeto-Completo.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.2/S-Retorno-1.5.2-Projeto-Completo.zip) |
+| Código-fonte, testes e documentação | [Baixar ZIP do projeto na main](https://github.com/gedielsonsaramento/S-Retorno.apk/archive/refs/heads/main.zip) |
+| Fontes do aplicativo Android | [app/](../app/) |
+| Fontes, testes e empacotador da Central | [central-retornos/](../central-retornos/) |
+| Instruções de compilação | [COMPILAR_1.5.2.md](COMPILAR_1.5.2.md) |
+
+O código da main corresponde à revisão posterior **Android 1.5.2 / Central 0.1.2**, e não aos instaladores 1.5.1 / 0.1.1 acima. O GitHub gera o ZIP com o nome do repositório e do ramo.
+
+O projeto completo **1.5.2 / Central 0.1.2** contém as pastas **Instaladores/** e **Fontes/**, além de **LEIA-ME.md**, **VALIDACAO.json** e **VERSOES.json**. Seus instaladores são da 1.5.2 / 0.1.2, não da 1.5.1 / 0.1.1. Siga seu **LEIA-ME.md** e mantenha os componentes desse pacote juntos.
+
+O ZIP do código contém o código próprio e as instruções de compilação. APKs, bibliotecas do SDK NDI, chaves de assinatura, credenciais e capturas privadas não fazem parte desse ZIP. Siga os guias para preparar as dependências e recursos HTML necessários à compilação.
 
 ## Instalar ou atualizar
 
-1. Baixe o APK e copie para a TV/box, por exemplo em um pendrive.
-2. Abra o arquivo no aparelho e autorize a instalação por esse gerenciador, se o Android solicitar.
-3. Para atualizar as edições TVBox 1.4.3–1.4.11, instale por cima, **sem desinstalar**. O pacote e o certificado foram mantidos para preservar as preferências.
-4. Abra **S-Retorno** e confira **1.4.12 (17)** em **Configurações → Diagnóstico do aparelho**.
+1. Baixe **S-Retorno-1.5.1-Central-pacote.zip** e extraia o conteúdo para obter **S-Retorno-1.5.1.apk**, **S-Retorno-Central-0.1.1.zip** e o manual.
+2. Copie o APK para a TV/box, por exemplo em um pendrive.
+3. Abra o arquivo no aparelho e autorize a instalação por esse gerenciador, se o Android solicitar.
+4. Para atualizar uma instalação compatível com o mesmo pacote e assinatura, instale por cima para preservar as configurações. Se já usa uma versão superior à 1.5.1, confira a versão antes de instalar.
+5. No Spresenter, abra **Configurações → Plugins → Instalar (.zip/pasta)** e selecione **S-Retorno-Central-0.1.1.zip**. Não selecione o ZIP do pacote completo.
+6. Siga o [manual da Central 0.1.1](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/MANUAL-DA-CENTRAL.md) para parear os aparelhos e escolher uma fonte.
 
-O APK mantém o identificador técnico `br.com.polegar.ndimonitor.tvboxtest`, embora o nome exibido não contenha “teste”. Instalações antigas do pacote principal, como 1.4.2, permanecem separadas. O arquivo é a compilação de desenvolvimento já entregue, assinada com o certificado de compatibilidade; não é uma publicação na Play.
+Android 6 usa HTML; Android 7 ou superior pode usar HTML e NDI conforme o aparelho/runtime. Mantenha o PC e o aparelho na mesma rede local. A publicação desses arquivos não equivale a uma nova validação de imagem, áudio ou comandos nos aparelhos físicos.
 
-Requer ARM32 ou ARM64. **Android 6 / API 23: HTML. Android 7 / API 24 ou superior: HTML e NDI**, sujeito ao runtime e ao conteúdo da fonte.
+O APK 1.5.1 está dentro do pacote de instaladores; não há link separado para esse APK. Para o projeto 1.5.2, use as instruções do **LEIA-ME.md** incluído nele.
 
-<details>
-<summary>Integridade do APK e informações para desenvolvedores</summary>
+## Integridade dos arquivos recebidos
 
-## Integridade do APK
+| Arquivo | Tamanho em bytes | SHA-256 |
+| --- | ---: | --- |
+| `S-Retorno-1.5.1.apk` | 15.877.564 | `ad61f3c1a7e9511d246949308d1e8ce5c041f9d952250ad5505a8eb0743d0a64` |
+| `S-Retorno-Central-0.1.1.zip` | 19.064 | `fe2fa0e2aff2205ed8c83e7991bbab0d96223d6d2698fe0f82b1007912412f0b` |
+| `S-Retorno-1.5.1-Central-pacote.zip` | 5.730.591 | `fc0c0e4271fe9f6ea3f3789b7ec5a2698bfe2374a605915ea9be57441e4f6238` |
+| `S-Retorno-1.5.2-Projeto-Completo.zip` | 12.202.147 | `f9aeeec6106b82bde9ddb21bb1df4de3c822d6226700b7e253091400bea823fe` |
 
-- Tamanho: **11.495.923 bytes**.
-- SHA-256: `5702809576829c7d41d79ee000131bd81b77b6733ed180dd435ec46acf12efb5`.
-- Certificado SHA-256: `6007ea0469cbe58451d689913869fcfd617e6e686967ed8a1e113091eac51421`.
+No Windows, confira um arquivo com `Get-FileHash .\S-Retorno-1.5.1.apk -Algorithm SHA256`. No Linux, use `sha256sum S-Retorno-1.5.1.apk`.
 
-No Windows PowerShell:
+## Histórico
 
-```powershell
-Get-FileHash .\S-Retorno-1.4.12.apk -Algorithm SHA256
-```
+- [Instalador 1.4.12 e arquivos preservados](https://github.com/gedielsonsaramento/S-Retorno.apk/tree/downloads-1.4.12)
+- [Histórico de alterações](CHANGELOG.md)
+- [Registros anteriores de validação](historico/README.md)
 
-No Linux:
-
-```bash
-sha256sum S-Retorno-1.4.12.apk
-```
-
-O APK foi conferido na [validação 1.4.12](historico/VALIDACAO_1.4.12.md). Esta revisão acrescenta o relato local de problemas e prepara o cliente de suporte; não há servidor configurado nem envio remoto de métricas. Os testes físicos relatados para versões anteriores estão em [TESTES_EM_APARELHOS.md](TESTES_EM_APARELHOS.md); a 1.4.12 ainda precisa ser testada nos aparelhos.
-
-## Compilar o código
-
-Abra a raiz que contém `settings.gradle` e siga os requisitos e comandos do [README](DESENVOLVIMENTO.md#compilar) ou do [guia passo a passo](GUIA_PASSO_A_PASSO.md). Para recepção real, instale separadamente o SDK oficial NDI. A assinatura usada em uma compilação própria determina se ela pode atualizar uma instalação existente.
-
-O código próprio está sob a [licença MIT](../LICENSE); o runtime NDI e seus avisos têm termos próprios. [Informações sobre os componentes NDI](LICENCA_NDI_IMPORTANTE.md).
-
-</details>
+Os resultados de testes e relatos de funcionamento do histórico se aplicam às versões e datas registradas. Eles não confirmam a homologação física desta distribuição.

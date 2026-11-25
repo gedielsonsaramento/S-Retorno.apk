@@ -1,96 +1,50 @@
-# S-Retorno 1.5.2
+# S-Retorno
 
 ![S-Retorno — Monitor de palco para NDI e HTML](artwork/s-retorno-social.png)
 
 Use sua TV, TV Box ou celular Android como monitor de retorno para igrejas e eventos. O S-Retorno recebe fontes **NDI** e exibe saídas **HTML do Spresenter** pela rede local.
 
+## Downloads
 
-> **Revisão para teste nos aparelhos:** app **1.5.2** com **Central de Retornos 0.1.2**. Mantém vários PCs no catálogo HTML e concentra a consulta de ocorrências e métricas no painel do Spresenter.
+| Conteúdo | Download |
+| --- | --- |
+| Aplicativo Android **1.5.1** + plugin **0.1.1** + manual | [Baixar pacote de instaladores](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-1.5.1-Central-pacote.zip) |
+| Plugin para Spresenter **0.1.1** | [Baixar Central de Retornos](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-Central-0.1.1.zip) |
+| Projeto completo **1.5.2 / Central 0.1.2**, com fontes e instaladores | [Baixar projeto completo](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.2/S-Retorno-1.5.2-Projeto-Completo.zip) |
+| Projeto Android **1.5.2** + fontes da Central **0.1.2** | [Baixar código-fonte, testes e documentação — ZIP](https://github.com/gedielsonsaramento/S-Retorno.apk/archive/refs/heads/main.zip) |
 
-## Arquivos desta entrega
+O primeiro pacote reúne os arquivos recebidos da **1.5.1 / Central 0.1.1**. O projeto completo é da revisão posterior **1.5.2 / Central 0.1.2** e inclui os instaladores dessa própria revisão. O pacote recebido da 1.5.1 não contém seus fontes exatos. [Versões, integridade e detalhes dos downloads](docs/DOWNLOADS.md).
 
-- **S-Retorno-1.5.2.apk**: aplicativo pronto para instalar.
-- **S-Retorno-Central-0.1.2.zip**: plugin instalável no Spresenter, compatível com o app 1.5.2.
-- **Fontes/S-Retorno-1.5.2/**: projeto Android e fontes do plugin no pacote completo.
+## Instalar e conectar
 
-Permite controlar fontes e acompanhar memória, CPU, rede e ocorrências pelo Spresenter. **Desligar as TVs e boxes após os cultos não gera relatório de erro.** Ao religar, o app restaura a fonte salva e a central retoma o vínculo. [Instalação e uso](central-retornos/README.md).
+1. Baixe **S-Retorno-1.5.1-Central-pacote.zip** e extraia o conteúdo. Dentro dele estão **S-Retorno-1.5.1.apk**, o ZIP instalável da Central e o manual.
+2. Abra o APK no aparelho Android. Na TV/box, você pode copiá-lo para um pendrive. Autorize a instalação pelo gerenciador de arquivos se o Android solicitar.
+3. Para atualizar uma instalação compatível com o mesmo pacote e assinatura, instale por cima para preservar as configurações. Se já usa uma versão superior à 1.5.1, confira a versão antes de instalar. O projeto completo 1.5.2 tem instruções próprias em seu **LEIA-ME.md**; mantenha app e plugin do mesmo pacote.
+4. No Spresenter, abra **Configurações → Plugins → Instalar (.zip/pasta)** e selecione **S-Retorno-Central-0.1.1.zip**. Use o ZIP do plugin, não o ZIP do pacote completo.
+5. Na TV/box, abra **Engrenagem → Central de Retornos → Gerar código de pareamento**. No plugin, escolha **Vincular retorno** e informe o endereço e o código mostrados na TV.
+6. Em **Fontes do Spresenter**, cole o link de **Editor remoto (rede) → Copiar link com token**. Depois, use **Escolher fonte** no cartão do aparelho.
 
-O pacote desta revisão inclui APK, plugin, fontes e instruções. Os testes automatizados e a compilação estão registrados em [Validação 1.5.2](docs/historico/VALIDACAO_1.5.2.md). O teste físico no Spresenter e nas boxes continua necessário.
+[Manual da Central 0.1.1](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/MANUAL-DA-CENTRAL.md).
 
 ## Compatibilidade
 
 | Versão do aparelho | Modos disponíveis |
 | --- | --- |
-| **Android 6** | **HTML** |
-| **Android 7 ou superior** | **HTML e NDI** |
+| Android 6 | HTML |
+| Android 7 ou superior | HTML e NDI, conforme aparelho/runtime |
 
-Mantenha o aparelho e o computador com o Spresenter ou transmissor NDI na **mesma rede**, por Wi-Fi ou cabo.
+Mantenha o aparelho e o computador com o Spresenter ou transmissor NDI na mesma rede, por Wi-Fi ou cabo. Na Central, aparelhos desligados ficam como **Sem comunicação**, sem criar uma falha automática apenas por esse motivo.
 
-## Como instalar
+## Código-fonte e documentação
 
-1. Extraia o pacote da revisão e localize **S-Retorno-1.5.2.apk**.
-2. No celular, abra o arquivo baixado. Para TV/box, você pode copiá-lo para um pendrive e abrir pelo gerenciador de arquivos.
-3. Se o Android solicitar, permita a instalação por esse navegador ou gerenciador de arquivos.
-4. Toque em **Instalar** e abra **S-Retorno**.
+O projeto publicado contém o aplicativo Android **1.5.2**, o módulo **central-retornos/** da Central **0.1.2**, testes e documentação. O ZIP do código não inclui o APK nem substitui o pacote de instaladores. Para compilar o aplicativo, siga os requisitos de SDK NDI e recursos HTML descritos nos guias.
 
-**Para atualizar as edições TVBox anteriores, instale por cima, sem desinstalar**, para manter as fontes e configurações salvas.
-
-## Como configurar as fontes HTML
-
-Faça esta configuração em cada TV ou box, uma vez para cada PC com Spresenter. O app mantém até **oito computadores**, cada um com sua própria conexão:
-
-1. No S-Retorno, selecione **HTML** e abra **engrenagem → Saídas HTML do Spresenter → Configurar pelo celular ou PC**.
-2. Deixe essa tela aberta: ela mostra um **endereço** e um **código de seis dígitos**.
-3. No computador com o Spresenter, abra **Editor remoto (rede)** e use **Copiar link com token**.
-4. No navegador do PC ou celular da mesma rede, abra o **endereço mostrado na TV/box**. Informe o código e cole o link completo copiado do Spresenter.
-5. Toque em **Enviar para esta TV**. Volte à lista do app e selecione a saída desejada.
-
-O código vale por cinco minutos. Se expirar, abra novamente **Configurar pelo celular ou PC** para gerar outro.
-
-Ao cadastrar outro PC, os anteriores são mantidos. Para remover somente um computador, use **Remover** ao lado do endereço nas configurações das saídas HTML.
-
-[Passo a passo completo para encontrar o link no Spresenter](docs/SAIDAS_SPRESENTER.md).
-
-## Como buscar novas fontes HTML
-
-1. Crie ou habilite a nova **Saída HTML** no Spresenter.
-2. No app, abra o painel de fontes, mantenha **HTML** selecionado e toque em **↻ no topo do painel**.
-3. Aguarde a lista atualizar e selecione a fonte que deseja exibir.
-
-Com os computadores cadastrados, a busca consulta os catálogos de todos eles e atualiza seus nomes. Se mudar também o endereço de uma saída, selecione a nova entrada na lista.
-
-Para procurar endereços padrão em outra faixa local, abra **engrenagem → Saídas HTML do Spresenter → Buscar em outra faixa de IP** e informe, por exemplo, **192.168.2**. A rede precisa permitir a comunicação com essa faixa. Para nomes personalizados e todas as saídas de um PC, cadastre seu link do Editor remoto.
-
-O app salva a fonte escolhida e a abre novamente na próxima inicialização. Para abrir um link HTML diretamente, use **Informar endereço** e cole o endereço completo da saída.
-
-## Como usar NDI
-
-Em aparelhos com **Android 7 ou superior**, deixe o transmissor NDI ativo no computador, selecione **NDI** no app, toque em **↻** para procurar fontes e escolha a desejada.
-
-## Ocorrências e métricas na Central
-
-Consulte as métricas e ocorrências na **Central de Retornos** do Spresenter. Os atalhos de diagnóstico e relatório saíram da interface da TV/box. O registro interno continua disponível para o painel após o pareamento.
-
-A recuperação de abertura mostra as ações de tentar novamente, abrir HTML e acessar as configurações do Android. [Escopo da interface](docs/INTERFACE_CENTRAL.md).
-
-## Testes e atualizações semanais
-
-**Realizamos testes e disponibilizamos novas atualizações toda semana** para melhorar o funcionamento, a compatibilidade e a estabilidade do aplicativo.
-
-Nos testes relatados pelo mantenedor, todas as boxes utilizadas e a TV Philips com Android funcionaram corretamente. [Ver o registro dos testes](docs/TESTES_EM_APARELHOS.md).
-
-Se encontrar uma dificuldade, consulte a ocorrência no painel e [relate o problema aqui](https://github.com/gedielsonsaramento/S-Retorno.apk/issues), indicando a versão e o que aconteceu.
-
-<details>
-<summary>Código-fonte e documentação técnica</summary>
-
-- O código-fonte da 1.5.2 acompanha o pacote completo, incluindo o módulo `central-retornos/`.
-- [Recompilar usando as bibliotecas do APK](docs/COMPILAR_1.5.2.md)
-- [Documentação completa e instruções de compilação](docs/README.md)
-- [Detalhes do download e integridade do APK](docs/DOWNLOADS.md)
+- [Compilação da revisão 1.5.2](docs/COMPILAR_1.5.2.md)
+- [Documentação e guias de uso](docs/README.md)
 - [Histórico de alterações](docs/CHANGELOG.md)
-- [Registros de validação](docs/historico/README.md)
+- [Registros anteriores de validação](docs/historico/README.md)
+- [Relatar um problema](https://github.com/gedielsonsaramento/S-Retorno.apk/issues)
 
-</details>
+Esta publicação disponibiliza os arquivos recebidos e os fontes existentes; não representa nova validação nos aparelhos. Os relatos antigos de funcionamento nas boxes e na TV Philips se aplicam às versões e datas registradas em cada documento.
 
 Projeto independente. Código próprio sob [licença MIT](LICENSE). NDI® é marca registrada da Vizrt NDI AB; os componentes NDI têm [termos e avisos próprios](docs/LICENCA_NDI_IMPORTANTE.md).

@@ -2,6 +2,10 @@
 
 Para baixar, instalar e usar o aplicativo, comece pelo [guia da página principal](../README.md).
 
+Os downloads recebidos são **S-Retorno 1.5.1 / Central 0.1.1**. Os fontes e guias técnicos deste ramo correspondem à revisão posterior **Android 1.5.2 / Central 0.1.2**. O pacote recebido não inclui os fontes exatos da 1.5.1. Consulte [Downloads](DOWNLOADS.md) para escolher o arquivo e conferir sua integridade.
+
+Para desenvolver, use [as instruções da revisão 1.5.2](COMPILAR_1.5.2.md) e os fontes do plugin em [central-retornos/](../central-retornos/).
+
 ## Guias de uso
 
 - [Instalação, atualização e integridade do APK](DOWNLOADS.md).
