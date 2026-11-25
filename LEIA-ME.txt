@@ -1,0 +1,31 @@
+S-Retorno 1.5.1 + Central de Retornos 0.1.1
+
+INSTALAÇÃO
+1. Atualize a box com S-Retorno-1.5.1.apk, sem desinstalar a versão anterior.
+2. No S-Present, abra Configurações > Plugins > Instalar (.zip/pasta).
+   Selecione S-Retorno-Central-0.1.1.zip, não o ZIP do pacote completo.
+3. Na TV: Engrenagem > Central de Retornos > Gerar código de pareamento.
+   No plugin: Vincular retorno e informe o endereço/código mostrados na TV.
+   Um vínculo já salvo na versão anterior é reutilizado, sem novo pareamento.
+4. No plugin, Fontes do S-Present permite configurar o catálogo HTML uma vez no PC.
+
+ROTINA DA IGREJA
+TVs e boxes podem ser desligadas após os cultos. A falta de resposta fica como
+Sem comunicação, sem gerar relatório de erro. Ao ligar, o app restaura a fonte
+salva e o plugin retoma o vínculo; os gráficos recomeçam em uma nova execução.
+Aguardando fonte HTML ou NDI também não vira relatório de falha automática.
+Falhas confirmadas e relatos manuais continuam disponíveis.
+Não é possível distinguir aparelho desligado de perda de rede somente pela
+falta de resposta. O painel usa um estado neutro para esses casos.
+
+Android 6: HTML. Android 7+: HTML/NDI, conforme aparelho e runtime.
+O gerenciamento funciona em primeiro plano, em rede local confiável.
+Não há envio remoto de métricas nesta versão.
+Para manter o IP, configure reserva DHCP no roteador.
+
+VALIDAÇÃO
+256 testes automatizados aprovados: 245 Android e 11 do plugin.
+Incluem ciclos simulados de desligamento/retorno. A assinatura de atualização
+foi preservada. A validação física com as boxes e o S-Present ainda é necessária.
+
+MANUAL-DA-CENTRAL.md contém o passo a passo completo e os limites.
