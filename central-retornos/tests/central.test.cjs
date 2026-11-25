@@ -100,3 +100,45 @@ test('authorization failures remain visible rather than being mistaken for a pow
   const h=await harness(saved(),async()=>({ok:false,status:401,body:'{}'}));
   assert(h.state().devices[0].error.includes('Acesso recusado'));
 });
+
+test('automatic discovery uses the configured Spresenter LAN address without a typed prefix',async()=>{
+  const h=await harness({devices:[],pc:{origin:'http://192.168.2.57:5050',token:'spk_synthetic_pc_token'}},async r=>
+    r.url.endsWith('/advanced')?ok({config:{outputs:[]}}):ok({protocol:'s-retorno-control',schema:1}));
+  await h.send({type:'scan'});for(let i=0;i<10&&h.state().scanning;i++)await wait();
+  const probes=h.requests.filter(r=>r.url.endsWith('/hello'));
+  assert.equal(probes.length,254);assert.equal(h.state().scanPrefix,'192.168.2');
+  assert(probes.every(r=>r.url.startsWith('http://192.168.2.')&&!r.headers.Authorization));
+});
+test('current host network overrides an old catalog network and unknown networks never guess a default',async()=>{
+  const h=await harness({devices:[],pc:{origin:'http://192.168.2.57:5050',token:'spk_synthetic_pc_token'}},async r=>
+    r.url.endsWith('/advanced')?ok({config:{outputs:[]}}):ok({protocol:'s-retorno-control',schema:1}));
+  await h.send({type:'scan',host:'10.20.7.53'});for(let i=0;i<10&&h.state().scanning;i++)await wait();
+  assert.equal(h.state().scanPrefix,'10.20.7');
+  const unknown=await harness();await unknown.send({type:'scan',host:'127.0.0.1'});
+  assert.equal(unknown.requests.length,0);
+  assert(unknown.messages.some(m=>m.type==='notice'&&m.error&&m.text.includes('Conecte o catálogo')));
+});
+
+test('a source request waits for a periodic read and transmits once with the selected URL',async()=>{
+  const h=await harness(saved());const original=h.spresenter.net.httpRequest;
+  let release,blocked=false;
+  h.spresenter.net.httpRequest=async r=>{
+    if(r.url.endsWith('/v1/status')&&!blocked){blocked=true;await new Promise(resolve=>release=resolve);}
+    return original(r);
+  };
+  h.spresenter.ui.onmessage({type:'init'});await wait();assert(release);
+  h.spresenter.ui.onmessage({type:'command',device:id,action:'set_source',mode:'html',name:'Músicos',url:'http://192.168.1.5:5050/output/musicos',commandId:'synthetic-source-001'});
+  await wait();assert.equal(h.requests.filter(r=>r.url.endsWith('/commands')).length,0);
+  release();await wait();
+  const requests=h.requests.filter(r=>r.url.endsWith('/commands'));assert.equal(requests.length,1);
+  assert.equal(JSON.parse(requests[0].body).url,'http://192.168.1.5:5050/output/musicos');
+  assert.match(h.state().devices[0].lastAction,/Fonte aceita pelo app/);
+  assert(!h.messages.some(m=>m.type==='notice'&&m.error));
+});
+test('wrong command receipt never reports a source as accepted',async()=>{
+  const h=await harness(saved());const original=h.spresenter.net.httpRequest;
+  h.spresenter.net.httpRequest=async r=>r.url.endsWith('/commands')?ok({ok:true,applied:true,command_id:'wrong-command'}):original(r);
+  await h.send({type:'command',device:id,action:'set_source',mode:'ndi',name:'PC (Principal)',commandId:'synthetic-source-002'});
+  assert(!h.messages.some(m=>m.type==='notice'&&/Fonte aceita/.test(m.text)));
+  assert.match(h.state().devices[0].lastAction,/sem confirmação/);
+});

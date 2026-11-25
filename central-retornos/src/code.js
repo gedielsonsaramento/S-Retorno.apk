@@ -4,8 +4,8 @@
   const KEY = "s-retorno-central-v1";
   let devices = [], pc = null, catalog = [], outputs = [], catalogError = "", catalogAt = 0;
   let ready = false, serial = 0, scanGeneration = 0, scanning = false, found = [], progress = 0;
-  let lastPoll = 0, polling = false, mutation = Promise.resolve();
-  const states = new Map(), busy = new Set();
+  let lastPoll = 0, polling = false, mutation = Promise.resolve(), scanPrefix = "", scanOrigin = "";
+  const states = new Map(), busy = new Set(), reads = new Map();
   const localHost = host => {
     const p = host.split(".").map(Number);
     return p.length === 4 && p.every((n,i) => Number.isInteger(n) && n >= 0 && n < 256 && String(n) === host.split(".")[i])
@@ -50,7 +50,7 @@
       return {id:d.id,address:d.address,name:d.name,status:s.status || null,lastSeen:s.lastSeen || 0,
         failures:s.failures || 0,error:s.error || "",history:s.history || [],sources:s.sources || [],busy:busy.has(d.id),
         lastAction:s.lastAction || "",durable:d.durable !== false};
-    }), catalog, outputs, catalogError, pcConfigured:!!pc, scanning, found, progress});
+    }), catalog, outputs, catalogError, pcConfigured:!!pc, scanning, found, progress, scanPrefix, scanOrigin});
   }
   function note(text, error) { spresenter.ui.postMessage({type:"notice",text,error:!!error}); }
   function operation(m, phase) {
@@ -66,7 +66,13 @@
       while (index < items.length) { const item = items[index++]; await fn(item); }
     }));
   }
-  async function readDevice(d, withSources) {
+  function readDevice(d, withSources) {
+    if (reads.has(d.id)) return reads.get(d.id);
+    const task = readDeviceNow(d, withSources);
+    reads.set(d.id, task);
+    return task.finally(() => { if (reads.get(d.id) === task) reads.delete(d.id); });
+  }
+  async function readDeviceNow(d, withSources) {
     if (busy.has(d.id)) return;
     busy.add(d.id);
     const s = states.get(d.id) || {history:[],failures:0}; states.set(d.id,s);
@@ -133,9 +139,20 @@
       if (force) try { outputs=(await spresenter.outputs.list()).map(o=>({index:o.index,name:o.name})); } catch(_){outputs=[];}
     } finally { polling=false;publish(); }
   }
+  function inferredPrefix(m) {
+    let host = String(m.host || "");
+    if (localHost(host)) {scanOrigin="Rede do Spresenter";return host.split(".").slice(0,3).join(".");}
+    if (pc) {
+      const match=/^https?:\/\/([0-9.]+)(?::[0-9]+)?$/.exec(pc.origin);
+      if(match&&localHost(match[1])) {scanOrigin="PC do catálogo Spresenter";return match[1].split(".").slice(0,3).join(".");}
+    }
+    // No hardcoded network: the SDK does not expose OS network interfaces.
+    throw new Error("Conecte o catálogo com o link local do Spresenter para identificar a rede, ou informe a faixa em Outra faixa de IP.");
+  }
   async function scan(prefix) {
     if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(prefix) || !localHost(prefix+".1"))
       throw new Error("Informe a faixa local, por exemplo 192.168.1.");
+    scanPrefix=prefix;
     const generation=++scanGeneration;scanning=true;found=[];progress=0;publish();
     try {
       await parallel(Array.from({length:254},(_,i)=>prefix+"."+(i+1)),6,async host=> {
@@ -147,10 +164,15 @@
         } catch(_) { }
         if (generation===scanGeneration) { progress++;if (progress%12===0) publish(); }
       });
-    } finally { if (generation===scanGeneration){scanning=false;publish();} }
+    } finally { if (generation===scanGeneration){
+      scanning=false;publish();note("Busca concluída. "+found.length+" app(s) encontrado(s) nesta faixa.");
+    } }
   }
   async function command(m) {
-    const d=getDevice(m.device), s=states.get(d.id)||{history:[]};
+    const d=getDevice(m.device);
+    // A periodic status read is not a user command: wait for it, without resending commands.
+    if (reads.has(d.id)) await reads.get(d.id);
+    const s=states.get(d.id)||{history:[]};
     if (busy.has(d.id)) throw new Error("Aguarde a operação atual neste aparelho.");
     const allowed=["set_source","reload_html","reconnect_ndi","clear_html_cache","refresh_sources","identify","rename"];
     if (!allowed.includes(m.action)) throw new Error("Ação inválida.");
@@ -169,7 +191,7 @@
       const res=await http(d.address+"/v1/commands","POST",request,d.token);
       if (res.ok!==true || res.applied!==true || res.command_id!==request.id) throw new Error("O comando não foi confirmado.");
       if (m.action==="rename") { d.name=request.name;await save(); }
-      s.lastAction="Comando confirmado pelo app";states.set(d.id,s);note(s.lastAction);
+      s.lastAction=m.action==="set_source"?"Fonte aceita pelo app: "+(m.name||m.url)+". Acompanhe o estado de reprodução no cartão.":"Comando confirmado pelo app";states.set(d.id,s);note(s.lastAction);
     } catch(e) { s.lastAction="Resultado sem confirmação. Confira o estado antes de repetir.";states.set(d.id,s);throw e; }
     finally { busy.delete(d.id);publish(); }
     await readDevice(d,true);publish();
@@ -181,7 +203,12 @@
     if (m.type==="init") {publish();pollAll(true).catch(()=>{});return;}
     operation(m,"started");
     if (m.type==="scan") {
-      scan(String(m.prefix||"").trim()).catch(e=>note(e.message,true)).finally(()=>operation(m,"finished"));return;
+      try {
+        const prefix=m.prefix?String(m.prefix).trim():inferredPrefix(m);
+        if(m.prefix)scanOrigin="Faixa informada";
+        scan(prefix).catch(e=>note(e.message,true)).finally(()=>operation(m,"finished"));
+      } catch(e) {note(e.message,true);operation(m,"finished");}
+      return;
     }
     mutation=mutation.then(async()=> {
       if (!ready) throw new Error("Aguarde o carregamento da central.");

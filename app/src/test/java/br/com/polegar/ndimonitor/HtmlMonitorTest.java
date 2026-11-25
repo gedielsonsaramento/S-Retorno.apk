@@ -94,6 +94,25 @@ public class HtmlMonitorTest {
         }
     }
 
+    @Test @Config(sdk = {23, 25, 35}, qualifiers = "land-xxhdpi")
+    public void lightModeKeepsUrlAcrossPauseAndDoesNotMultiplyCanvasByDensity() {
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            FrameLayout frame=new FrameLayout(controller.get());
+            HtmlMonitor monitor=create(controller.get(),frame,new ArrayList<>());
+            monitor.setDisplayLayout(true,true,true);
+            monitor.resume(); monitor.show(URL);
+            for(int i=0;i<2;i++) {
+                WebView web=(WebView)((HtmlStageViewport)frame.getChildAt(0)).getChildAt(0);
+                assertEquals(1f,web.getResources().getDisplayMetrics().density,0);
+                assertEquals(URL,Shadows.shadowOf(web).getLastLoadedUrl());
+                assertTrue(web.getSettings().getMediaPlaybackRequiresUserGesture()==false);
+                assertEquals(android.view.View.LAYER_TYPE_NONE,web.getLayerType());
+                monitor.pause(); monitor.resume();
+            }
+            monitor.destroy();
+        }
+    }
+
     @Test public void opensSavedUrlWithMediaAndSafeWebSettings() {
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
             Activity activity = controller.get();
@@ -173,4 +192,30 @@ public class HtmlMonitorTest {
             monitor.destroy();
         }
     }
+    @Test @Config(sdk = {23, 25, 35})
+    public void tvCompatibilityKeepsDefaultCompositorAndHtmlSourceAcrossResume() {
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            FrameLayout frame = new FrameLayout(controller.get());
+            HtmlMonitor monitor = create(controller.get(), frame, new ArrayList<>());
+            monitor.resume();monitor.show(URL);
+            WebView first = (WebView) ((HtmlStageViewport) frame.getChildAt(0)).getChildAt(0);
+            assertEquals(android.view.View.LAYER_TYPE_NONE, first.getLayerType());
+            monitor.setDisplayLayout(true, true);
+            WebView compat = (WebView) ((HtmlStageViewport) frame.getChildAt(0)).getChildAt(0);
+            assertNotSame(first, compat);assertNull(first.getParent());
+            assertEquals(android.view.View.LAYER_TYPE_NONE, compat.getLayerType());
+            assertEquals(URL, Shadows.shadowOf(compat).getLastLoadedUrl());
+            assertFalse(compat.getSettings().getMediaPlaybackRequiresUserGesture());
+            monitor.pause();assertEquals(0, frame.getChildCount());monitor.resume();
+            WebView resumed = (WebView) ((HtmlStageViewport) frame.getChildAt(0)).getChildAt(0);
+            assertEquals(android.view.View.LAYER_TYPE_NONE, resumed.getLayerType());
+            assertEquals(URL, Shadows.shadowOf(resumed).getLastLoadedUrl());
+            monitor.setDisplayLayout(true, false);
+            WebView standard = (WebView) ((HtmlStageViewport) frame.getChildAt(0)).getChildAt(0);
+            assertEquals(android.view.View.LAYER_TYPE_NONE, standard.getLayerType());
+            assertEquals(URL, Shadows.shadowOf(standard).getLastLoadedUrl());
+            monitor.destroy();
+        }
+    }
+
 }

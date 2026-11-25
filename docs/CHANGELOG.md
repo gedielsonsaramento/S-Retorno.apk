@@ -1,3 +1,40 @@
+# 1.5.5 Fluidez RC1 + Central 0.1.5 — publicação em 25/11/2026
+
+- Publica os instaladores e fontes originais da candidata entregue em 10/11/2026, com links diretos e hashes.
+- NDI: fila de vídeo limitada ao quadro mais recente pendente, recepção/desenho em threads distintas e fila própria de áudio limitada.
+- HTML: mantém os perfis da correção HF1 e oferece Monitor 16:9 — leve (720p).
+- Central 0.1.5: mostra métricas separadas de captura, envio à tela, substituições e áudio. Mantém seleção de destino/fonte com confirmação visível.
+- Atualiza a main com os fontes correspondentes. Preserva os instaladores 1.5.1/0.1.1 e o projeto completo 1.5.2/0.1.2 no histórico.
+- Conferência de publicação: integridade, certificado e correspondência entre fontes e pacotes; 24 testes da Central aprovados. A revisão continua candidata, sem nova compilação ou teste físico nesta publicação.
+- [Alterações e limites](../REVISAO_FLUIDEZ.md) · [Validação original](../VALIDACAO_1.5.5.md) · [Conferência da publicação](historico/PUBLICACAO_1.5.5_RC1_2026-11-25.md).
+
+# 1.5.4 HTML HF1 — correção adicional da captura (08/11/2026)
+
+- Adiciona o programa main.1e8e98fc.js ao perfil de compatibilidade após verificar o nome e os hashes da nova captura do Spresenter.
+- Preserva o perfil anterior e converte os posicionamentos inset nas quatro bordas para motores antigos.
+- O registro HTML HF1 descreve testes com Chromium 83 e limites físicos. A candidata 1.5.5 incorpora esses assets.
+- [Registro histórico HTML HF1](../REVISAO_HTML_HF1.md).
+
+# 1.5.4 — candidata em fontes / Central 0.1.4 (31/10/2026)
+
+- Central: nomes do catálogo são botões que abrem seleção de destino e fonte.
+- Confirmação e erros ficam visíveis na janela de ação; envio duplicado bloqueado durante espera.
+- Comando aguarda a consulta periódica do aparelho terminar, sem repetição automática de comandos.
+- Android: reverte a camada de software forçada em 1.5.3, restaurando a política de composição da 1.4.10. É uma reversão candidata, não uma solução comprovada para a regressão já relatada em 1.5.2.
+- Sem APK novo e sem execução dos testes Android. Ver REVISAO_1.5.4.md.
+
+# 1.5.3 + Central 0.1.3 — Vínculo, busca e saída (31/10/2026)
+
+- Troca formulários por ações diretas da ponte SDK: Vincular, Conectar catálogo e Confirmar funcionam em iframe sem allow-forms. Mantém validação dos campos e suporte a Enter.
+- Inicia a busca ao abrir Vincular retorno e identifica a faixa pelo endereço LAN da janela ou do PC cadastrado no catálogo. Mostra a faixa usada e mantém seleção manual quando não há referência local. O SDK não expõe interfaces de rede do sistema.
+- Atualiza o aviso ao concluir a busca, eliminando “Iniciando busca” obsoleto.
+- Adiciona Buscar PCs e saídas automaticamente às configurações Android. Adicionar PC com link vazio também inicia a busca, preservando a fonte selecionada.
+- Mantém sondagens HTML públicas inclusive nos PCs com chave expirada/erro de API; os tokens continuam restritos ao catálogo autorizado do PC correspondente.
+- Faz o X encerrar a tarefa; Voltar continua recolhendo a lista. Quando o app é a tela inicial padrão, tenta abrir outra tela inicial instalada para evitar o retorno imediato.
+- No modo compatibilidade TV Box, usa uma camada de software somente no WebView. A disposição e a reprodução de mídia na box do relato permanecem pendentes de validação física.
+- Preserva a assinatura de atualização, as bibliotecas NDI e o tratamento neutro para TVs desligadas.
+- [Validação e limites](historico/VALIDACAO_1.5.3.md).
+
 # 1.5.2 + Central 0.1.2 — Interface e busca HTML (31/10/2026)
 
 - Integra o fonte completo da 1.5.1, incluindo a Central e o tratamento de desligamento diário.

@@ -88,7 +88,6 @@ final class LanHtmlDiscovery {
                     limited |= subnet.prefix < 24;
                     for (String host : subnet.candidates()) {
                         String root = "http://" + host + ":" + HtmlSourceUrl.DEFAULT_PORT;
-                        if (ownedBy(apis, root)) continue;
                         String[] alternatives = new String[paths.size() - 1];
                         for (int i = 1; i < paths.size(); ++i) alternatives[i - 1] = root + paths.get(i);
                         if (!add(targets, network, root + paths.get(0), alternatives)) { limited = true; break; }
@@ -101,7 +100,6 @@ final class LanHtmlDiscovery {
             String prefix = HtmlSearchSettings.normalize(preferences.getString(HtmlSearchSettings.EXTRA_PREFIX, ""));
             if (!prefix.isEmpty()) for (String host : new LanIpv4Subnet(prefix + ".0", 24).candidates()) {
                 String root = "http://" + host + ":" + HtmlSourceUrl.DEFAULT_PORT;
-                if (ownedBy(apis, root)) continue;
                 String[] alternatives = new String[paths.size() - 1];
                 for (int i = 1; i < paths.size(); ++i) alternatives[i - 1] = root + paths.get(i);
                 if (!add(targets, fallbackApiNetwork, root + paths.get(0), alternatives)) { limited = true; break; }
@@ -115,8 +113,12 @@ final class LanHtmlDiscovery {
             work.add(new HtmlHttpProbe.Target(api.endpoint(),
                     address -> (HttpURLConnection) selected.openConnection(address, Proxy.NO_PROXY)));
             apiTargets.put(api.endpoint(), api);
+            // Keep public discovery available even with a saved expired API key.
+            String[] alternatives = new String[paths.size() - 1];
+            for (int i = 1; i < paths.size(); ++i) alternatives[i - 1] = api.origin + paths.get(i);
+            add(targets, selected, api.origin + paths.get(0), alternatives);
         }
-        if (fallbackApiNetwork != null && HtmlSourceUrl.isWebAddress(savedAddress) && !ownedBy(apis, savedAddress)) {
+        if (fallbackApiNetwork != null && HtmlSourceUrl.isWebAddress(savedAddress)) {
             // The selected URL is also retried through a routed LAN, outside the local /24.
             Network selected = savedNetwork != null ? savedNetwork : fallbackApiNetwork;
             work.add(new HtmlHttpProbe.Target(savedAddress,
@@ -160,11 +162,6 @@ final class LanHtmlDiscovery {
                     @Override public void onFinished() { dispatch(current, listener::onFinished); }
                 });
         session.start();
-    }
-
-    private static boolean ownedBy(java.util.List<SpresenterConnection> connections, String address) {
-        for (SpresenterConnection connection : connections) if (connection.owns(address)) return true;
-        return false;
     }
 
     static boolean matchesApiSubnet(LinkProperties link, String origin) {

@@ -1,12 +1,20 @@
-# S-Retorno — Central de Retornos 0.1.2
+# Central de Retornos 0.1.5 — candidata para teste
 
-Plugin para gerenciar apps **S-Retorno 1.5.1 ou superior** na mesma rede do Spresenter. A revisão 0.1.2 corrige a comunicação da interface e mostra o andamento das ações. Funciona pelo painel do Spresenter, sem executável auxiliar e sem servidor de internet.
+Correção sobre a 0.1.3. Compatível com o protocolo dos apps S-Retorno 1.5.1–1.5.3; não exige o APK candidato 1.5.4.
 
-## Instalar
+## Instalar e escolher uma fonte
 
-1. Atualize a box com **S-Retorno-1.5.2.apk**, sobre a edição anterior, sem desinstalar.
-2. No Spresenter, abra **Configurações → Plugins → Instalar (.zip/pasta)** e selecione **S-Retorno-Central-0.1.2.zip**. Não extraia o ZIP para selecionar um arquivo interno.
-3. Abra o painel **Central de Retornos**. O plugin utiliza as permissões de ler saídas e comunicar-se pela rede.
+1. Mantenha o app atual na box. Esta entrega não contém APK novo.
+2. No Spresenter, atualize o mesmo plugin com **S-Retorno-Central-0.1.5.zip**. Os vínculos continuam no mesmo armazenamento.
+3. Abra **Fontes do Spresenter** e conecte o catálogo pelo link local com token do Editor remoto, caso ainda não esteja configurado.
+4. Clique no nome da fonte, como **Músicos**, selecione a box e confirme. Com várias boxes, o destino precisa ser escolhido explicitamente.
+5. A janela permanece aberta e informa a resposta. **Fonte aceita pelo app** confirma o comando; o cartão acompanha separadamente **HTML carregando**, **HTML carregado** ou o estado NDI. HTML carregado não comprova a composição visual da TV.
+
+Também continua disponível **Escolher fonte** no cartão, para fontes HTML/NDI conhecidas ou endereço/nome manual.
+
+Correções: catálogo clicável, feedback dentro da janela de ação, bloqueio de clique duplicado enquanto o pedido aguarda resposta e espera da consulta automática antes de enviar o comando. Comandos sem confirmação não são reenviados automaticamente.
+
+Validação desta revisão: 23 testes Node aprovados. Não testado no Spresenter instalado nem na box física. Os relatórios antigos de navegador/Android não são validação desta revisão.
 
 ## Vincular uma box
 
@@ -86,8 +94,13 @@ python3 scripts/package.py
 
 O empacotador cria `manifest.json` e `dist/` na raiz do ZIP instalável. Fontes oficiais: [arquitetura](https://github.com/sonext-software/spresenter-plugin/blob/master/docs/architecture.md), [permissões](https://github.com/sonext-software/spresenter-plugin/blob/master/docs/permissions.md) e [instalação](https://github.com/sonext-software/spresenter-plugin/blob/master/docs/packaging.md).
 
-## Verificações da 0.1.2
+## Verificações da 0.1.2 (histórico)
 
 A interface aceita o envelope oficial do SDK inclusive quando o relay nativo não preenche `MessageEvent.source`. Mostra progresso imediato, confirmação de recebimento pela lógica e erro quando a lógica não responde. As mensagens de pareamento também aparecem dentro da janela modal.
 
 `npm test` verifica lógica e ponte de interface. `tests/browser-roundtrip.cjs` executa a interface em Chromium com um servidor Java real de `LanControlServer`, incluindo código inválido, varredura de 254 endereços, pareamento, catálogo, comandos e desligamento/reconexão. Requer Playwright, classes Android compiladas, JDK 17, um JAR de `org.json` e as variáveis `JAVA_HOME`, `CHROME_BIN`, `MONITOR_JSON_JAR` e `MONITOR_BROWSER_WORK`. O teste não substitui a execução dentro do Spresenter instalado na igreja.
+
+
+## Fluidez no S-Retorno 1.5.5
+
+Os detalhes NDI mostram captura, envio de quadros ao Android, quadros substituídos antes do desenho, maior tempo de desenho da última janela e fila/falhas de áudio. O envio ao Android não mede a imagem efetivamente exibida pelo monitor nem latência ponta a ponta. As novas métricas ficam sem valor em versões antigas do app. Quadros substituídos pelo app e descartados pelo SDK são contadores diferentes.

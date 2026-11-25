@@ -12,6 +12,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "latest_frame_queue.h"
 
 #if NDI_ENABLED
 #include "Processing.NDI.Lib.h"
@@ -28,6 +29,7 @@ std::mutex g_callback_mutex;
 
 ANativeWindow* g_window = nullptr;
 std::mutex g_window_mutex;
+uint64_t g_window_generation = 0;
 
 std::thread g_capture_thread;
 std::atomic<bool> g_running{false};
@@ -40,13 +42,18 @@ NdiSourceFinder g_source_finder;
 JNIEnv* get_env(bool& attached) {
     attached = false;
     if (!g_vm) return nullptr;
-    JNIEnv* env = nullptr;
-    const jint result = g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
-    if (result == JNI_EDETACHED) {
-        if (g_vm->AttachCurrentThread(&env, nullptr) != JNI_OK) return nullptr;
-        attached = true;
-    }
-    return env;
+    // Attach a native worker once, rather than on every audio packet.
+    struct Attachment {
+        JNIEnv* env = nullptr;
+        bool owned = false;
+        Attachment() {
+            if (g_vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED)
+                owned = g_vm->AttachCurrentThread(&env, nullptr) == JNI_OK;
+        }
+        ~Attachment() { if (owned) g_vm->DetachCurrentThread(); }
+    };
+    thread_local Attachment attachment;
+    return attachment.env;
 }
 
 void call_status(const std::string& message) {
@@ -85,17 +92,20 @@ void call_video_format(int width, int height, double fps) {
     if (attached) g_vm->DetachCurrentThread();
 }
 
-void call_performance(const std::string& source, int64_t captured, int64_t dropped, int queued) {
+void call_performance(const std::string& source, int64_t captured, int64_t dropped, int queued,
+                      int64_t rendered, int64_t replaced, int64_t render_micros) {
     bool attached = false;
     JNIEnv* env = get_env(attached);
     if (!env) return;
     std::lock_guard<std::mutex> lock(g_callback_mutex);
     if (g_callback) {
         jclass cls = env->GetObjectClass(g_callback);
-        jmethodID method = env->GetMethodID(cls, "onNativePerformance", "(Ljava/lang/String;JJI)V");
+        jmethodID method = env->GetMethodID(cls, "onNativePerformance", "(Ljava/lang/String;JJIJJJ)V");
         if (method) {
             jstring name = env->NewStringUTF(source.c_str());
-            env->CallVoidMethod(g_callback, method, name, static_cast<jlong>(captured), static_cast<jlong>(dropped), queued);
+            env->CallVoidMethod(g_callback, method, name, static_cast<jlong>(captured),
+                static_cast<jlong>(dropped), queued, static_cast<jlong>(rendered),
+                static_cast<jlong>(replaced), static_cast<jlong>(render_micros));
             env->DeleteLocalRef(name);
         }
         env->DeleteLocalRef(cls);
@@ -104,7 +114,7 @@ void call_performance(const std::string& source, int64_t captured, int64_t dropp
     if (attached) g_vm->DetachCurrentThread();
 }
 
-void call_audio(const std::vector<int16_t>& pcm, int sample_rate, int channels) {
+void call_audio(const std::string& source, const std::vector<int16_t>& pcm, int sample_rate, int channels) {
     if (pcm.empty()) return;
     bool attached = false;
     JNIEnv* env = get_env(attached);
@@ -113,13 +123,17 @@ void call_audio(const std::vector<int16_t>& pcm, int sample_rate, int channels) 
     std::lock_guard<std::mutex> lock(g_callback_mutex);
     if (g_callback) {
         jclass cls = env->GetObjectClass(g_callback);
-        jmethodID method = env->GetMethodID(cls, "onNativeAudio", "([SII)V");
+        jmethodID method = env->GetMethodID(cls, "onNativeAudio", "(Ljava/lang/String;[SII)V");
         if (method) {
             jshortArray data = env->NewShortArray(static_cast<jsize>(pcm.size()));
-            env->SetShortArrayRegion(data, 0, static_cast<jsize>(pcm.size()),
-                                     reinterpret_cast<const jshort*>(pcm.data()));
-            env->CallVoidMethod(g_callback, method, data, sample_rate, channels);
-            env->DeleteLocalRef(data);
+            if (data) {
+                jstring name = env->NewStringUTF(source.c_str());
+                env->SetShortArrayRegion(data, 0, static_cast<jsize>(pcm.size()),
+                                         reinterpret_cast<const jshort*>(pcm.data()));
+                env->CallVoidMethod(g_callback, method, name, data, sample_rate, channels);
+                env->DeleteLocalRef(name);
+                env->DeleteLocalRef(data);
+            }
         }
         env->DeleteLocalRef(cls);
         if (env->ExceptionCheck()) env->ExceptionClear();
@@ -140,13 +154,30 @@ bool ensure_ndi() {
     return ready;
 }
 
-void render_frame(const NDIlib_video_frame_v2_t& frame) {
-    std::lock_guard<std::mutex> lock(g_window_mutex);
-    if (!g_window || !frame.p_data || frame.xres <= 0 || frame.yres <= 0) return;
+struct RenderTarget { uint64_t generation = 0; int width = 0, height = 0; };
 
-    ANativeWindow_setBuffersGeometry(g_window, frame.xres, frame.yres, WINDOW_FORMAT_RGBA_8888);
+bool render_frame(const NDIlib_video_frame_v2_t& frame, RenderTarget& target) {
+    if (!frame.p_data || frame.xres <= 0 || frame.yres <= 0) return false;
+    struct Window {
+        ANativeWindow* pointer = nullptr;
+        ~Window() { if (pointer) ANativeWindow_release(pointer); }
+    } window;
+    uint64_t generation;
+    {
+        std::lock_guard<std::mutex> lock(g_window_mutex);
+        if (!g_window) return false;
+        window.pointer = g_window;
+        ANativeWindow_acquire(window.pointer);
+        generation = g_window_generation;
+    }
+    // Display waits must not block the UI's surface lifecycle callback.
+    if (target.generation != generation || target.width != frame.xres || target.height != frame.yres) {
+        if (ANativeWindow_setBuffersGeometry(window.pointer, frame.xres, frame.yres, WINDOW_FORMAT_RGBA_8888) != 0)
+            return false;
+        target = {generation, frame.xres, frame.yres};
+    }
     ANativeWindow_Buffer buffer{};
-    if (ANativeWindow_lock(g_window, &buffer, nullptr) != 0) return;
+    if (ANativeWindow_lock(window.pointer, &buffer, nullptr) != 0) return false;
 
     const int rows = std::min(frame.yres, buffer.height);
     const int bytes_per_row = std::min(frame.xres, buffer.width) * 4;
@@ -156,13 +187,14 @@ void render_frame(const NDIlib_video_frame_v2_t& frame) {
                     frame.p_data + y * frame.line_stride_in_bytes,
                     bytes_per_row);
     }
-    ANativeWindow_unlockAndPost(g_window);
+    return ANativeWindow_unlockAndPost(window.pointer) == 0;
 }
 
-void deliver_audio(const NDIlib_audio_frame_v3_t& frame) {
-    if (!frame.p_data || frame.no_channels <= 0 || frame.no_samples <= 0) return;
+void deliver_audio(const std::string& source, const NDIlib_audio_frame_v3_t& frame, std::vector<int16_t>& pcm) {
+    if (!frame.p_data || frame.no_channels <= 0 || frame.no_samples <= 0 ||
+        frame.sample_rate < 8000 || frame.sample_rate > 192000 || frame.no_samples > frame.sample_rate) return;
     const int output_channels = std::min(frame.no_channels, 2);
-    std::vector<int16_t> pcm(static_cast<size_t>(frame.no_samples) * output_channels);
+    pcm.resize(static_cast<size_t>(frame.no_samples) * output_channels);
     const auto* base = reinterpret_cast<const uint8_t*>(frame.p_data);
 
     for (int sample = 0; sample < frame.no_samples; ++sample) {
@@ -174,8 +206,15 @@ void deliver_audio(const NDIlib_audio_frame_v3_t& frame) {
                 static_cast<int16_t>(std::lround(value * 32767.0f));
         }
     }
-    call_audio(pcm, frame.sample_rate, output_channels);
+    call_audio(source, pcm, frame.sample_rate, output_channels);
 }
+
+struct OwnedVideo {
+    NDIlib_recv_instance_t receiver;
+    NDIlib_video_frame_v2_t frame;
+    OwnedVideo(NDIlib_recv_instance_t r, const NDIlib_video_frame_v2_t& f) : receiver(r), frame(f) {}
+    ~OwnedVideo() { NDIlib_recv_free_video_v2(receiver, &frame); }
+};
 
 void capture_loop(std::string source_name) {
     if (!ensure_ndi()) {
@@ -200,8 +239,24 @@ void capture_loop(std::string source_name) {
     call_status("Conectando a " + source_name + "...");
     int last_width = 0;
     int last_height = 0;
+    int last_rate_n = 0, last_rate_d = 0;
     int empty_captures = 0;
     int64_t captured_frames = 0;
+    int64_t replaced_frames = 0;
+    std::atomic<int64_t> rendered_frames{0}, maximum_render_micros{0};
+    LatestFrameQueue<OwnedVideo> frames;
+    std::vector<int16_t> pcm;
+    std::thread renderer([&] {
+        RenderTarget target;
+        while (auto frame = frames.take()) {
+            const auto started = std::chrono::steady_clock::now();
+            if (render_frame(frame->frame, target)) ++rendered_frames;
+            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - started).count();
+            auto previous = maximum_render_micros.load();
+            while (elapsed > previous && !maximum_render_micros.compare_exchange_weak(previous, elapsed)) {}
+        }
+    });
     auto next_stats = std::chrono::steady_clock::now();
 
     while (g_running.load()) {
@@ -216,21 +271,22 @@ void capture_loop(std::string source_name) {
             case NDIlib_frame_type_video: {
                 empty_captures = 0;
                 ++captured_frames;
-                render_frame(video);
-                if (video.xres != last_width || video.yres != last_height) {
+                if (video.xres != last_width || video.yres != last_height ||
+                    video.frame_rate_N != last_rate_n || video.frame_rate_D != last_rate_d) {
                     last_width = video.xres;
                     last_height = video.yres;
+                    last_rate_n = video.frame_rate_N; last_rate_d = video.frame_rate_D;
                     const double fps = video.frame_rate_D
                         ? static_cast<double>(video.frame_rate_N) / video.frame_rate_D : 0.0;
                     call_video_format(video.xres, video.yres, fps);
                     call_status("Recebendo " + source_name);
                 }
-                NDIlib_recv_free_video_v2(receiver, &video);
+                if (frames.offer(std::make_unique<OwnedVideo>(receiver, video))) ++replaced_frames;
                 break;
             }
             case NDIlib_frame_type_audio:
                 empty_captures = 0;
-                deliver_audio(audio);
+                deliver_audio(source_name, audio, pcm);
                 NDIlib_recv_free_audio_v3(receiver, &audio);
                 break;
             case NDIlib_frame_type_metadata:
@@ -254,11 +310,14 @@ void capture_loop(std::string source_name) {
             NDIlib_recv_queue_t queue{};
             NDIlib_recv_get_performance(receiver, &total, &dropped);
             NDIlib_recv_get_queue(receiver, &queue);
-            call_performance(source_name, captured_frames, dropped.video_frames, queue.video_frames);
+            call_performance(source_name, captured_frames, dropped.video_frames, queue.video_frames,
+                rendered_frames.load(), replaced_frames, maximum_render_micros.exchange(0));
             next_stats = now + std::chrono::seconds(1);
         }
     }
 
+    frames.close();
+    renderer.join(); // Every SDK frame is freed before its receiver is destroyed.
     NDIlib_recv_destroy(receiver);
 }
 #endif
@@ -329,6 +388,7 @@ Java_br_com_polegar_ndimonitor_NativeBridge_disconnect(JNIEnv*, jclass) {
 extern "C" JNIEXPORT void JNICALL
 Java_br_com_polegar_ndimonitor_NativeBridge_setSurface(JNIEnv* env, jclass, jobject surface) {
     std::lock_guard<std::mutex> lock(g_window_mutex);
+    ++g_window_generation;
     if (g_window) {
         ANativeWindow_release(g_window);
         g_window = nullptr;

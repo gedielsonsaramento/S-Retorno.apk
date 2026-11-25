@@ -11,13 +11,13 @@ const cp=classes+':'+process.env.MONITOR_JSON_JAR+':'+work;
 const built=require('node:child_process').spawnSync(config.jdk+'/bin/javac',['-cp',classes+':'+process.env.MONITOR_JSON_JAR,'-d',work,path.join(__dirname,'ControlBrowserHarness.java')],{encoding:'utf8'});
 if(built.status)throw new Error(built.stderr);
 const java=spawn(config.jdk+'/bin/java',['-cp',cp,'br.com.polegar.ndimonitor.ControlBrowserHarness'],{stdio:['pipe','pipe','pipe']});
-let offline=false,commands=[],staticServer;
+let offline=false,commands=[],pairRequests=0,staticServer;
 async function main(){
  const native=await new Promise((resolve,reject)=>{let out='';java.stdout.on('data',b=>{out+=b;if(out.includes('\n'))resolve(JSON.parse(out.split('\n')[0]));});java.once('exit',code=>reject(new Error('Java harness exited '+code)));});
  const server=staticServer=http.createServer((req,res)=>{
   if(req.url==='/'){
-   res.setHeader('Content-Type','text/html');res.end(`<!doctype html><html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh;display:block}</style><iframe id="panel" src="/ui/index.html"></iframe><script>
-   const state={};window.spresenter={storage:{get:async k=>state[k],set:async(k,v)=>state[k]=v},outputs:{list:async()=>[{index:0,name:'Principal'},{index:1,name:'Retorno Músicos'}]},net:{httpRequest:r=>window.hostHttp(r)},ui:{postMessage:m=>document.getElementById('panel').contentWindow.dispatchEvent(new MessageEvent('message',{data:{__spresenter:true,data:m}}))}};
+   res.setHeader('Content-Type','text/html');res.end(`<!doctype html><html><meta charset="UTF-8"><style>body{margin:0}iframe{border:0;width:100vw;height:100vh;display:block}</style><iframe id="panel" sandbox="allow-scripts" src="/ui/index.html"></iframe><script>
+   const state={};window.spresenter={storage:{get:async k=>state[k],set:async(k,v)=>state[k]=v},outputs:{list:async()=>[{index:0,name:'Principal'},{index:1,name:'Retorno Músicos'}]},net:{httpRequest:r=>window.hostHttp(r)},ui:{postMessage:m=>document.getElementById('panel').contentWindow.postMessage({__spresenter:true,data:m},'*')}};
    window.addEventListener('message',e=>{if(e.source===document.getElementById('panel').contentWindow&&e.data&&e.data.__spresenter&&spresenter.ui.onmessage)spresenter.ui.onmessage(e.data.data);});
    </script><script src="/code.js"></script></html>`);return;
   }
@@ -28,23 +28,28 @@ async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROME_BIN,headless:true,args:['--no-sandbox','--no-zygote','--single-process','--disable-gpu']});
  try{
   const page=await browser.newPage({viewport:{width:1120,height:940}});let errors=[];page.on('pageerror',e=>errors.push(e.message));
+  page.setDefaultTimeout(6000);
+  page.on('console',m=>{if(m.type()==='error'&&/form submission|sandbox/i.test(m.text()))errors.push(m.text());});
   await page.exposeFunction('hostHttp',async r=>{
    if(r.url.endsWith('/api/v1/advanced'))return {ok:true,status:200,body:JSON.stringify({config:{outputs:[{type:'network',slug:'musicos',name:'Músicos'},{type:'network',slug:'retorno',name:'Pastor'}]}})};
    if(offline)return {ok:false,status:503,body:'{}'};
+   if(r.url.endsWith('/v1/pair'))pairRequests++;
    if(r.url.endsWith('/v1/commands'))commands.push(JSON.parse(r.body));
    if(r.url.endsWith('/v1/hello')&&new URL(r.url).hostname!=='192.168.1.20')return {ok:false,status:404,body:'{}'};
    const response=await fetch(native.address+new URL(r.url).pathname,{method:r.method,headers:r.headers,body:r.body});
    return {ok:response.ok,status:response.status,body:await response.text()};
   });
   await page.goto('http://127.0.0.1:'+server.address().port);const f=page.frameLocator('#panel');
-  await f.locator('#add').click();await f.locator('#pair-name').fill('Músicos');await f.locator('#pair-address').fill('192.168.1.20:48762');await f.locator('#pair-code').fill(native.code==='000000'?'000001':'000000');await f.locator('#pair-submit').click();
+  if(!await f.locator('#catalog-details').evaluate(el=>el.open))await f.locator('#catalog-details summary').click();await f.locator('#pc-link').fill('http://192.168.1.5:5050/warp/?token=spk_browser_synthetic_key');await f.locator('#pc-submit').click();await f.locator('#catalog-state').filter({hasText:'2 saídas HTML'}).waitFor();
+  await f.locator('#add').click();await f.locator('#scan-result').filter({hasText:'Busca concluída'}).waitFor();assert.match(await f.locator('#scan-network').innerText(),/192\.168\.1/);await f.locator('#pair-submit').click();assert.equal(pairRequests,0);await f.locator('#pair-name').fill('Músicos');await f.locator('#pair-address').fill('192.168.1.20:48762');await f.locator('#pair-code').fill(native.code==='000000'?'000001':'000000');await f.locator('#pair-submit').click();
   await f.locator('#pair-notice').filter({hasText:'Acesso recusado'}).waitFor();
-  await f.locator('#scan-prefix').fill('192.168.1');await f.locator('#scan').click();
+  await f.locator('details').filter({has:f.locator('#scan-prefix')}).locator('summary').click();await f.locator('#scan-prefix').fill('192.168.1');await f.locator('#scan-range').click();
   await f.locator('#scan-result').filter({hasText:'Busca concluída'}).waitFor();
+  await f.locator('#pair-notice').filter({hasText:'Busca concluída. 1 app(s)'}).waitFor();
   assert.equal(await f.locator('[data-found]').count(),1);await f.locator('[data-found]').click();
-  await f.locator('#pair-code').fill(native.code);await f.locator('#pair-submit').click();
+  await f.locator('#pair-code').fill(native.code);await f.locator('#pair-code').press('Enter');
   await f.locator('.device .badge').filter({hasText:'App responde'}).waitFor();await f.locator('[data-close="pair-dialog"]').click();
-  await f.locator('#catalog-details summary').click();await f.locator('#pc-link').fill('http://192.168.1.5:5050/warp/?token=spk_browser_synthetic_key');await f.locator('#pc-form button').click();
+  if(!await f.locator('#catalog-details').evaluate(el=>el.open))await f.locator('#catalog-details summary').click();await f.locator('#pc-link').fill('http://192.168.1.5:5050/warp/?token=spk_browser_synthetic_key');await f.locator('#pc-form button').click();
   await f.locator('#catalog-state').filter({hasText:'2 saídas HTML'}).waitFor();
   await f.locator('[data-do="details"]').click();await f.getByText('Relato: áudio',{exact:false}).waitFor();
   const before=commands.length;await f.locator('[data-do="clear_html_cache"]').click();await f.locator('[data-close="action-dialog"]').click();assert.equal(commands.length,before);
@@ -57,7 +62,7 @@ async function main(){
   await f.locator('.badge').filter({hasText:'Sem comunicação'}).waitFor();assert.equal(await f.locator('#connected').innerText(),'0');assert.equal(await f.locator('#attention').innerText(),'0');
   offline=false;await f.locator('#refresh').click();await f.locator('.badge').filter({hasText:'App responde'}).waitFor();
   assert.deepEqual(errors,[]);assert(!JSON.stringify(commands).includes('spk_browser_synthetic_key'));
-  console.log(JSON.stringify({passed:true,checks:['null-source SDK relay','visible invalid-code response','254-address scan with one discovered app','real Java LAN server pairing','catalog without API credential distribution','manual error display','cache cancellation and confirmed execution','NDI selection','responsive layout','offline and reconnection'],consoleErrors:errors.length,commands:commands.length}));
+  console.log(JSON.stringify({passed:true,checks:['sandboxed iframe without allow-forms','automatic scan from configured PC network','invalid fields do not transmit','Enter pairs without form submission','scan completion replaces pending notice','null-source SDK relay','visible invalid-code response','254-address scan with one discovered app','real Java LAN server pairing','catalog without API credential distribution','manual error display','cache cancellation and confirmed execution','NDI selection','responsive layout','offline and reconnection'],consoleErrors:errors.length,commands:commands.length}));
  }finally{await browser.close();server.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{java.stdin.end();java.kill();if(staticServer)staticServer.close();});

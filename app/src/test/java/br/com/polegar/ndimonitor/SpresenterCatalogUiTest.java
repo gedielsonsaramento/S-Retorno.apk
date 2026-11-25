@@ -149,4 +149,24 @@ public class SpresenterCatalogUiTest {
             assertEquals(1, MainActivityModeTest.FakeHtmlDiscovery.starts);
         }
     }
+    @Test public void automaticSearchAndEmptyAddPcStartDiscoveryWithoutDiscardingSelection() {
+        String saved=ROOT+"/output/musicos";
+        prefs.edit().putString(MainActivity.KEY_HTML_URL,saved).commit();
+        for (int button : new int[]{R.id.spresenter_auto_search, R.id.spresenter_link_save}) {
+            try(ActivityController<MainActivity> controller=Robolectric.buildActivity(MainActivity.class).setup()) {
+                MainActivity activity=controller.get();
+                activity.findViewById(R.id.monitor_settings_button).performClick();
+                ShadowAlertDialog.getLatestAlertDialog().findViewById(R.id.spresenter_api_button).performClick();
+                AlertDialog form=ShadowAlertDialog.getLatestAlertDialog();
+                int before=MainActivityModeTest.FakeHtmlDiscovery.starts;
+                form.findViewById(button).performClick();
+                org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle();
+                assertFalse(form.isShowing());
+                assertEquals(before+1,MainActivityModeTest.FakeHtmlDiscovery.starts);
+                assertEquals(View.VISIBLE,activity.findViewById(R.id.source_panel).getVisibility());
+                assertEquals(saved,prefs.getString(MainActivity.KEY_HTML_URL,""));
+            }
+        }
+    }
+
 }

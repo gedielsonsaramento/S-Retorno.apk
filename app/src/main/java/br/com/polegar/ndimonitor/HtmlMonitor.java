@@ -41,6 +41,7 @@ final class HtmlMonitor {
     private HtmlStageViewport viewport;
     private boolean stageLayout = true;
     private boolean compatibilityMode;
+    private boolean lightMode;
     private String lastConsoleError = "";
     private HtmlLegacyCompat legacyCompat;
     private View customView;
@@ -98,9 +99,16 @@ final class HtmlMonitor {
     }
 
     void setDisplayLayout(boolean stage, boolean compatibility) {
-        if (stageLayout == stage && compatibilityMode == compatibility) return;
+        setDisplayLayout(stage,compatibility,false);
+    }
+
+    void setDisplayLayout(boolean stage, boolean compatibility, boolean light) {
+        light = stage && light;
+        compatibility = !light && compatibility;
+        if (stageLayout == stage && compatibilityMode == compatibility && lightMode == light) return;
         stageLayout = stage;
         compatibilityMode = compatibility;
+        lightMode = light;
         retries = 0;
         handler.removeCallbacks(loadTimeout);
         handler.removeCallbacks(retry);
@@ -156,6 +164,10 @@ final class HtmlMonitor {
                 }
             };
             webView.setBackgroundColor(Color.BLACK);
+            // Restore the 1.4 renderer policy. Forcing software composition can
+            // suppress video and changes Chromium's scaled drawing path on TV firmware.
+            // Keep density compatibility independent from GPU composition.
+            webView.setLayerType(View.LAYER_TYPE_NONE, null);
             WebSettings settings = webView.getSettings();
             settings.setJavaScriptEnabled(true);
             settings.setDomStorageEnabled(true);
@@ -200,7 +212,7 @@ final class HtmlMonitor {
 
                 @Override public void onHideCustomView() { hideCustomView(); }
             });
-            viewport = new HtmlStageViewport(activity, webView, stageLayout);
+            viewport = new HtmlStageViewport(activity, webView, stageLayout, lightMode);
             container.addView(viewport, 0, new FrameLayout.LayoutParams(-1, -1));
             return true;
         } catch (RuntimeException unavailable) {
@@ -311,7 +323,7 @@ final class HtmlMonitor {
         String description = "WebView: " + current.getSettings().getUserAgentString()
                 + "\nÁrea do motor: " + current.getWidth() + " × " + current.getHeight()
                 + " px; densidade " + current.getResources().getDisplayMetrics().density
-                + "\nExibição: " + (stageLayout ? compatibilityMode ? "16:9 compatibilidade" : "16:9" : "página original")
+                + "\nExibição: " + (stageLayout ? lightMode ? "16:9 leve (720p)" : compatibilityMode ? "16:9 compatibilidade" : "16:9" : "página original")
                 + (legacyCompat == null ? "" : "\n" + legacyCompat.describe())
                 + (lastConsoleError.isEmpty() ? "" : "\nErro JavaScript: " + lastConsoleError);
         java.util.concurrent.atomic.AtomicBoolean finished = new java.util.concurrent.atomic.AtomicBoolean();

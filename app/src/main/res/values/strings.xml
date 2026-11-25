@@ -10,6 +10,8 @@
     <string name="starting">Iniciando S-Retorno…</string>
     <string name="open_sources">Abrir fontes e modo de exibição</string>
     <string name="close">Fechar</string>
+    <string name="exit_app">Fechar aplicativo</string>
+    <string name="exit_home_title">Abrir tela inicial do aparelho</string>
     <string name="searching_sources">Procurando fontes NDI na rede…</string>
     <string name="no_sources">Nenhuma fonte encontrada. A busca continua; confira a rede.</string>
     <string name="refresh_sources">Atualizar fontes</string>
@@ -54,10 +56,12 @@
     <string name="html_layout_monitor">Monitor 16:9</string>
     <string name="html_layout_page">Página original</string>
     <string name="html_layout_compatibility">16:9 — compatibilidade TV Box</string>
+    <string name="html_layout_light">16:9 — leve (720p)</string>
     <string-array name="html_layouts">
         <item>Monitor 16:9 — ajustar à tela</item>
         <item>Layout original da página</item>
         <item>Monitor 16:9 — compatibilidade TV Box</item>
+        <item>Monitor 16:9 — leve (720p, menor resolução)</item>
     </string-array>
     <string name="html_retrying">Retorno indisponível. Tentando novamente…</string>
     <string name="html_load_failed">Não foi possível abrir o retorno. Abra o menu para conferir o endereço e recarregar.</string>
@@ -77,7 +81,8 @@
     <string name="spresenter_pairing_ended">Configuração encerrada. Abra novamente para gerar outro código.</string>
     <string name="spresenter_editor_link_label">Ou cole o link completo neste aparelho:</string>
     <string name="spresenter_editor_link_hint">Link de Copiar link com token</string>
-    <string name="spresenter_editor_link_save">Adicionar PC e buscar saídas</string>
+    <string name="spresenter_auto_search">Buscar PCs e saídas automaticamente</string>
+    <string name="spresenter_editor_link_save">Adicionar PC pelo link e buscar saídas</string>
     <string name="spresenter_editor_link_invalid">Cole o link completo de Copiar link com token, no Editor remoto (rede).</string>
     <string name="spresenter_manual_title">Configuração manual</string>
     <string name="spresenter_api_address">Endereço da API do computador</string>

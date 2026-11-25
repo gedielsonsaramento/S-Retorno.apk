@@ -2,49 +2,67 @@
 
 ![S-Retorno — Monitor de palco para NDI e HTML](artwork/s-retorno-social.png)
 
-Use sua TV, TV Box ou celular Android como monitor de retorno para igrejas e eventos. O S-Retorno recebe fontes **NDI** e exibe saídas **HTML do Spresenter** pela rede local.
+Use sua TV, TV Box ou celular Android como monitor de retorno para igrejas e eventos. O app recebe fontes **NDI** e exibe saídas **HTML do Spresenter** pela rede local. A **Central de Retornos** é o plugin que gerencia os aparelhos pelo Spresenter.
 
-## Downloads
+## Versão mais recente: 1.5.5 Fluidez RC1 + Central 0.1.5
 
-| Conteúdo | Download |
+**Candidata para testes nos aparelhos.** Publicada no GitHub em 25/11/2026. O APK está compilado; a fluidez e a reprodução na box ainda precisam ser conferidas em campo.
+
+| O que baixar | Download direto |
 | --- | --- |
-| Aplicativo Android **1.5.1** + plugin **0.1.1** + manual | [Baixar pacote de instaladores](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-1.5.1-Central-pacote.zip) |
-| Plugin para Spresenter **0.1.1** | [Baixar Central de Retornos](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-Central-0.1.1.zip) |
-| Projeto completo **1.5.2 / Central 0.1.2**, com fontes e instaladores | [Baixar projeto completo](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.2/S-Retorno-1.5.2-Projeto-Completo.zip) |
-| Projeto Android **1.5.2** + fontes da Central **0.1.2** | [Baixar código-fonte, testes e documentação — ZIP](https://github.com/gedielsonsaramento/S-Retorno.apk/archive/refs/heads/main.zip) |
+| Aplicativo Android **1.5.5 Fluidez RC1** | [⬇️ S-Retorno-1.5.5-Fluidez-RC1.apk](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.5-fluidez-rc1/S-Retorno-1.5.5-Fluidez-RC1.apk) |
+| Plugin do Spresenter **Central 0.1.5** | [⬇️ S-Retorno-Central-0.1.5.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.5-fluidez-rc1/S-Retorno-Central-0.1.5.zip) |
+| Projeto completo em fontes, com recursos de compilação | [⬇️ S-Retorno-1.5.5-Fluidez-RC1-Fontes.zip](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.5-fluidez-rc1/S-Retorno-1.5.5-Fluidez-RC1-Fontes.zip) |
 
-O primeiro pacote reúne os arquivos recebidos da **1.5.1 / Central 0.1.1**. O projeto completo é da revisão posterior **1.5.2 / Central 0.1.2** e inclui os instaladores dessa própria revisão. O pacote recebido da 1.5.1 não contém seus fontes exatos. [Versões, integridade e detalhes dos downloads](docs/DOWNLOADS.md).
+[Detalhes, versões anteriores e integridade dos arquivos](docs/DOWNLOADS.md).
 
 ## Instalar e conectar
 
-1. Baixe **S-Retorno-1.5.1-Central-pacote.zip** e extraia o conteúdo. Dentro dele estão **S-Retorno-1.5.1.apk**, o ZIP instalável da Central e o manual.
-2. Abra o APK no aparelho Android. Na TV/box, você pode copiá-lo para um pendrive. Autorize a instalação pelo gerenciador de arquivos se o Android solicitar.
-3. Para atualizar uma instalação compatível com o mesmo pacote e assinatura, instale por cima para preservar as configurações. Se já usa uma versão superior à 1.5.1, confira a versão antes de instalar. O projeto completo 1.5.2 tem instruções próprias em seu **LEIA-ME.md**; mantenha app e plugin do mesmo pacote.
-4. No Spresenter, abra **Configurações → Plugins → Instalar (.zip/pasta)** e selecione **S-Retorno-Central-0.1.1.zip**. Use o ZIP do plugin, não o ZIP do pacote completo.
-5. Na TV/box, abra **Engrenagem → Central de Retornos → Gerar código de pareamento**. No plugin, escolha **Vincular retorno** e informe o endereço e o código mostrados na TV.
-6. Em **Fontes do Spresenter**, cole o link de **Editor remoto (rede) → Copiar link com token**. Depois, use **Escolher fonte** no cartão do aparelho.
+1. Baixe o **APK** e abra no Android. Na TV/box, você pode copiá-lo para um pendrive e abrir pelo gerenciador de arquivos.
+2. Para atualizar a edição TVBox com o mesmo pacote e certificado, **instale por cima, sem desinstalar**, para conservar as fontes e configurações. O APK desta entrega mantém o certificado da 1.5.1.
+3. No Spresenter, abra **Configurações → Plugins → Instalar (.zip/pasta)** e selecione **S-Retorno-Central-0.1.5.zip**.
+4. Na TV/box, abra **Engrenagem → Central de Retornos → Gerar código de pareamento**. Mantenha essa janela aberta.
+5. No plugin, use **Vincular retorno**, selecione ou informe o endereço da box e digite o código mostrado nela.
+6. Em **Fontes do Spresenter**, cole o link de **Editor remoto (rede) → Copiar link com token** e conecte o catálogo.
+7. No cartão da box, use **Escolher fonte**. Também é possível clicar numa saída do catálogo, escolher o aparelho e confirmar. A janela mostra o andamento e o resultado do envio.
 
-[Manual da Central 0.1.1](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/MANUAL-DA-CENTRAL.md).
+[Manual da Central](central-retornos/README.md). A confirmação do comando indica que o app aceitou a fonte; confira também a imagem na TV.
 
 ## Compatibilidade
 
-| Versão do aparelho | Modos disponíveis |
+| Aparelho | Modos disponíveis |
 | --- | --- |
 | Android 6 | HTML |
 | Android 7 ou superior | HTML e NDI, conforme aparelho/runtime |
 
-Mantenha o aparelho e o computador com o Spresenter ou transmissor NDI na mesma rede, por Wi-Fi ou cabo. Na Central, aparelhos desligados ficam como **Sem comunicação**, sem criar uma falha automática apenas por esse motivo.
+Mantenha o PC e o aparelho na mesma rede, por cabo ou Wi-Fi. TVs e boxes desligadas após o culto ficam como **Sem comunicação**, sem gerar falha automática apenas por esse motivo.
 
-## Código-fonte e documentação
+## HTML e NDI nesta revisão
 
-O projeto publicado contém o aplicativo Android **1.5.2**, o módulo **central-retornos/** da Central **0.1.2**, testes e documentação. O ZIP do código não inclui o APK nem substitui o pacote de instaladores. Para compilar o aplicativo, siga os requisitos de SDK NDI e recursos HTML descritos nos guias.
+- **HTML:** preserva os perfis de compatibilidade da correção HF1 e acrescenta **Exibição HTML → Monitor 16:9 — leve (720p)**. A opção reduz a resolução lógica e pode reduzir a nitidez.
+- **NDI:** limita a fila de vídeo e separa recepção, desenho e escrita de áudio para evitar acúmulo de quadros em sobrecarga.
+- **Central:** mostra métricas distintas de captura, envio à tela, quadros substituídos, tempo de desenho e fila de áudio.
 
-- [Compilação da revisão 1.5.2](docs/COMPILAR_1.5.2.md)
-- [Documentação e guias de uso](docs/README.md)
-- [Histórico de alterações](docs/CHANGELOG.md)
-- [Registros anteriores de validação](docs/historico/README.md)
-- [Relatar um problema](https://github.com/gedielsonsaramento/S-Retorno.apk/issues)
+Para procurar novas fontes, abra a lista no app e use **↻**. Para listar saídas HTML com nomes personalizados, configure o catálogo do PC ou use o catálogo enviado pela Central.
 
-Esta publicação disponibiliza os arquivos recebidos e os fontes existentes; não representa nova validação nos aparelhos. Os relatos antigos de funcionamento nas boxes e na TV Philips se aplicam às versões e datas registradas em cada documento.
+[Alterações e limites da candidata](REVISAO_FLUIDEZ.md) · [Validação original do APK](VALIDACAO_1.5.5.md) · [Conferência desta publicação](docs/historico/PUBLICACAO_1.5.5_RC1_2026-11-25.md).
 
-Projeto independente. Código próprio sob [licença MIT](LICENSE). NDI® é marca registrada da Vizrt NDI AB; os componentes NDI têm [termos e avisos próprios](docs/LICENCA_NDI_IMPORTANTE.md).
+## Versões anteriores
+
+- [S-Retorno 1.5.1 + Central 0.1.1 e manual — pacote enviado pelo mantenedor](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.1/S-Retorno-1.5.1-Central-pacote.zip).
+- [Projeto completo 1.5.2 + Central 0.1.2](https://github.com/gedielsonsaramento/S-Retorno.apk/raw/refs/heads/downloads-1.5.2/S-Retorno-1.5.2-Projeto-Completo.zip).
+
+<details>
+<summary>Código-fonte e documentação</summary>
+
+- [Código próprio desta revisão — ZIP do GitHub](https://github.com/gedielsonsaramento/S-Retorno.apk/archive/refs/heads/versao-1.5.5-fluidez-rc1.zip).
+- [Compilar a revisão 1.5.5](docs/COMPILAR_1.5.5.md).
+- [Documentação e guias](docs/README.md).
+- [Histórico de alterações](docs/CHANGELOG.md).
+- [Relatar um problema](https://github.com/gedielsonsaramento/S-Retorno.apk/issues).
+
+O pacote completo de fontes acima inclui os recursos desta entrega. Para compilar o ZIP automático do GitHub, prepare também o SDK NDI e os perfis HTML conforme o guia. A revisão exige recompilar Java e C++/JNI juntos.
+
+</details>
+
+Projeto independente. Código próprio sob [licença MIT](LICENSE). NDI® é marca registrada da Vizrt NDI AB; seus componentes têm [termos e avisos próprios](docs/LICENCA_NDI_IMPORTANTE.md).

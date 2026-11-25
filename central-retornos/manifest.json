@@ -1,7 +1,7 @@
 {
   "id": "br.polegar.s-retorno-central",
   "name": "S-Retorno — Central de Retornos",
-  "version": "0.1.2",
+  "version": "0.1.5",
   "description": "Gerencie fontes, conexão, métricas e manutenção dos apps S-Retorno na rede local.",
   "author": "Gedielson Saramento / Polegar Mídia",
   "minAppVersion": "0.4.0",

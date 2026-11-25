@@ -48,6 +48,7 @@ public class LanMultiPcDiscoveryTest {
     @Implements(Network.class)
     public static class Requests {
         static final Map<String, MockWebServer> servers = new ConcurrentHashMap<>();
+        static final Set<String> publicSuccess = ConcurrentHashMap.newKeySet();
         static final Set<String> publicHosts = ConcurrentHashMap.newKeySet();
         static final AtomicBoolean publicCredential = new AtomicBoolean();
         @Implementation protected URLConnection openConnection(URL url, Proxy proxy) throws java.io.IOException {
@@ -59,8 +60,11 @@ public class LanMultiPcDiscoveryTest {
                 @Override public int getResponseCode() {
                     publicHosts.add(url.getHost());
                     if (getRequestProperty("Authorization") != null) publicCredential.set(true);
-                    return 404;
+                    return publicSuccess.contains(url.getHost()) ? 200 : 404;
                 }
+                @Override public String getContentType() { return "text/html; charset=UTF-8"; }
+                @Override public java.io.InputStream getInputStream() { return new java.io.ByteArrayInputStream(
+                        "<!doctype html><html><title>Spresenter retorno</title></html>".getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
                 @Override public void connect() { }
                 @Override public void disconnect() { }
                 @Override public boolean usingProxy() { return false; }
@@ -74,7 +78,7 @@ public class LanMultiPcDiscoveryTest {
         SpresenterSetupNetworkTest.Connections.active = null;
         SpresenterSetupNetworkTest.Connections.capabilities.clear();
         SpresenterSetupNetworkTest.Connections.links.clear();
-        Requests.servers.clear(); Requests.publicHosts.clear(); Requests.publicCredential.set(false);
+        Requests.servers.clear(); Requests.publicHosts.clear(); Requests.publicSuccess.clear(); Requests.publicCredential.set(false);
         Network wifi = ReflectionHelpers.callConstructor(Network.class, ClassParameter.from(int.class, 2));
         NetworkCapabilities caps = new NetworkCapabilities();
         ReflectionHelpers.callInstanceMethod(caps, "addTransportType",
@@ -137,6 +141,18 @@ public class LanMultiPcDiscoveryTest {
         assertFalse(Requests.publicCredential.get());
     }
 
+    @Test public void expiredApiKeyDoesNotBlockPublicSourcesFromTheSamePc() throws Exception {
+        try (MockWebServer first = new MockWebServer()) {
+            first.start();first.enqueue(new MockResponse().setResponseCode(401));
+            Requests.servers.put("192.168.2.53",first);Requests.publicSuccess.add("192.168.2.53");
+            settings.save(new SpresenterConnection(A, KEY_A));
+            Scan scan=scan(A+"/output/retorno");
+            assertEquals(R.string.spresenter_api_unauthorized,scan.catalogError);
+            assertTrue(scan.sources.stream().anyMatch(source->source.url.startsWith(A+"/output/")));
+            assertFalse(Requests.publicCredential.get());
+        }
+    }
+
     private Scan scan(String saved, boolean publicOnly) throws Exception {
         LanHtmlDiscovery discovery = new LanHtmlDiscovery(context);
         Scan scan = new Scan();
@@ -158,8 +174,11 @@ public class LanMultiPcDiscoveryTest {
         final Map<String, List<HtmlSource>> catalogs = new HashMap<>();
         boolean finished, unavailable;
         int targets;
+        final java.util.List<HtmlSource> sources = new java.util.ArrayList<>();
+        int catalogError;
         @Override public void onStarted(int count, boolean limited) { targets = count; }
-        @Override public void onSource(HtmlSource source) { }
+        @Override public void onSource(HtmlSource source) { sources.add(source); }
+        @Override public void onCatalogError(int error) { catalogError=error; }
         @Override public void onProgress(int completed, int total) { }
         @Override public void onFinished() { finished = true; }
         @Override public void onUnavailable() { unavailable = true; finished = true; }

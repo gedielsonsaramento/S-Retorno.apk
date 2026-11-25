@@ -1,3 +1,33 @@
+# Atualização HTML HF1 — 08/11/2026
+
+O perfil desta entrega contém os programas `main.ff832fdd.js` (captura anterior) e `main.1e8e98fc.js` (captura de 08/11), além do CSS compartilhado. Os nomes e hashes são verificados pelo Android antes da adaptação. Não substitua o perfil inteiro ao acrescentar uma nova captura.
+
+Para reproduzir, preservando os assets anteriores:
+
+```bash
+npm ci
+node prepare.cjs "/captura/Slide do apresentador_files/main.1e8e98fc.js.baixados" "/captura/Slide do apresentador_files/main.eb127441.css" "/tmp/novo-perfil-html"
+node merge-profile.cjs "../../app/src/main/assets/html-compat" "/tmp/novo-perfil-html"
+node check-transform.cjs
+node check-live.cjs "/tmp/novo-perfil-html" "/captura/Slide do apresentador_files/main.1e8e98fc.js.baixados"
+```
+
+`merge-profile.cjs` verifica hashes, preserva recursos conhecidos, rejeita conflitos e respeita o limite de quatro recursos do adaptador. O texto do campo `profile` produzido por `prepare.cjs` é histórico; a mesclagem o atualiza com os identificadores dos programas efetivamente incluídos.
+
+Para medir pixels em um Chromium instalado com Puppeteer compatível, defina `CHROME_BIN` como o caminho do executável e `PUPPETEER_MODULE` como o módulo `puppeteer-core`. Execute:
+
+```bash
+node check-browser.cjs "../../app/src/main/assets/html-compat" "/captura/Slide do apresentador_files/main.1e8e98fc.js.baixados" "/captura/Slide do apresentador_files/main.eb127441.css" "/tmp/relatorio-html"
+```
+
+O teste usa somente servidor HTTP/WebSocket em loopback. Para esta entrega, `chrome-aws-lambda@3.1.1` forneceu Chromium 83.0.4103.0 e `puppeteer-core@3.1.0` o controlou. O navegador antigo foi usado apenas para a fixture local; não é um componente do APK. O teste reproduziu a área 0 × 0 no programa original e validou 1920 × 1080 e 1280 × 720 no adaptado, com letras, imagem, recarga e atualizações.
+
+[Resultado e limites da HF1](../../REVISAO_HTML_HF1.md).
+
+---
+
+## Documentação histórica do preparo inicial
+
 # Preparar uma captura para motores HTML antigos
 
 Esta ferramenta é usada na compilação, não no aparelho. Prepara JavaScript de uma captura como ES5 e CSS para Chrome 44. O APK 1.5.2 inclui novamente os arquivos deste perfil, ausentes no pacote 1.5.1. O empacotamento para TV confere sua presença e integridade. O aplicativo usa o perfil somente em Chrome 44–86, após verificar os bytes que o servidor da fonte entrega. A 1.4.7 estende o perfil anterior (Chrome 52–86) para o motor Chrome 44 fotografado na BTV B9/API 23.

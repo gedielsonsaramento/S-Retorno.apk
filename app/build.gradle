@@ -2,9 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
-// Optional local debug build using unchanged native files from a verified APK.
-// Release builds always use the SDK/CMake integration below.
+// Java callbacks and the native frame queue must be compiled together.
 def nativeReuse = providers.gradleProperty('monitorPrebuiltNativeDir').orNull
+if (nativeReuse) throw new GradleException('A revisão de fluidez exige recompilar C++/JNI. Remova monitorPrebuiltNativeDir e instale o SDK NDI.')
 def supportEndpoint = providers.gradleProperty('monitorSupportEndpoint').getOrElse('')
 
 android {
@@ -16,8 +16,8 @@ android {
         applicationId 'br.com.polegar.ndimonitor'
         minSdk 23
         targetSdk 36
-        versionCode 20
-        versionName '1.5.2'
+        versionCode 23
+        versionName '1.5.5-fluidez-rc1'
         buildConfigField 'String', 'SUPPORT_ENDPOINT', groovy.json.JsonOutput.toJson(supportEndpoint)
 
         ndk {
@@ -109,7 +109,7 @@ tasks.register('verifyReleaseNdiSdk') {
         }
     }
 }
-tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
+tasks.matching { it.name in ['preReleaseBuild', 'preTvboxTestBuild'] }.configureEach {
     dependsOn tasks.named('verifyReleaseNdiSdk')
 }
 
@@ -119,7 +119,10 @@ tasks.register('verifyHtmlCompat') {
         def manifestFile = file('src/main/assets/html-compat/manifest.json')
         if (!manifestFile.isFile()) throw new GradleException('Perfil HTML ausente: prepare tools/html-compat antes de empacotar para TV.')
         def profile = new groovy.json.JsonSlurper().parse(manifestFile)
-        if (profile.schema != 1 || profile.resources.size() != 2) throw new GradleException('Perfil HTML invalido.')
+        if (profile.schema != 1 || profile.minChrome != 44 || profile.maxChrome != 86 ||
+                !(profile.resources instanceof List) || profile.resources.size() < 2 ||
+                profile.resources.size() > 4 || profile.resources*.name.toSet().size() != profile.resources.size())
+            throw new GradleException('Perfil HTML invalido.')
         profile.resources.each { resource ->
             if (!(resource.asset ==~ /html-compat\/[A-Za-z0-9._-]+/) || resource.asset.contains('..'))
                 throw new GradleException('Caminho HTML invalido.')

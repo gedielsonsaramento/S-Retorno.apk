@@ -1,0 +1,66 @@
+{
+  "apk": "S-Retorno-1.5.5-Fluidez-RC1.apk",
+  "sha256": "35b8fe401da69343be036bdf1dd7e369758be96b4e126d19f901b5cdf274f895",
+  "size_bytes": 11684980,
+  "application_id": "br.com.polegar.ndimonitor.tvboxtest",
+  "version_code": 23,
+  "version_name": "1.5.5-fluidez-rc1",
+  "signature_matches_previous": true,
+  "signature_schemes": [
+    "v1",
+    "v2"
+  ],
+  "zip_alignment_16k": true,
+  "min_sdk": 23,
+  "target_sdk": 36,
+  "all_source_assets_match": true,
+  "native_libraries": [
+    {
+      "path": "lib/armeabi-v7a/libndi.so",
+      "size": 4871548,
+      "sha256": "7061bbd25a71ec1538b73bd665bb316d1056d224913ffbce3f3a62b0f71d3679",
+      "elf_load_alignments": [
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "elf_16k_compatible": false
+    },
+    {
+      "path": "lib/armeabi-v7a/libndimonitor.so",
+      "size": 247468,
+      "sha256": "99c98af01efffd12a044eb25361e0ac5a1b281be380c9b3350af05f7c12f007d",
+      "elf_load_alignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "elf_16k_compatible": true
+    },
+    {
+      "path": "lib/arm64-v8a/libndi.so",
+      "size": 5461304,
+      "sha256": "09848dc0a66c79fb4918193517b65ad374af9a4e393db6bfb0c4f4c93ee4fccb",
+      "elf_load_alignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ],
+      "elf_16k_compatible": true
+    },
+    {
+      "path": "lib/arm64-v8a/libndimonitor.so",
+      "size": 403384,
+      "sha256": "72a496824551f181af3b8c604b9238deb0858ec8e500e5d744d9b58512e26b30",
+      "elf_load_alignments": [
+        16384,
+        16384,
+        16384
+      ],
+      "elf_16k_compatible": true
+    }
+  ],
+  "physical_box_validated": false
+}

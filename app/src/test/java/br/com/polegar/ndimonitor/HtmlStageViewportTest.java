@@ -77,6 +77,22 @@ public class HtmlStageViewportTest {
         }
     }
 
+    @Test public void lightCanvasUses720pAndKeepsAllEdgesVisible() {
+        try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {
+            View content = new View(controller.get());
+            HtmlStageViewport viewport = new HtmlStageViewport(controller.get(), content, true, true);
+            for (int[] size : new int[][]{{1920,1080},{1280,720},{1536,709},{640,480}}) {
+                layout(viewport,size[0],size[1]);
+                assertEquals(1280,content.getWidth()); assertEquals(720,content.getHeight());
+                float x=content.getTranslationX(),y=content.getTranslationY();
+                assertTrue(x>=-.01f && y>=-.01f);
+                assertTrue(x+content.getWidth()*content.getScaleX()<=size[0]+.01f);
+                assertTrue(y+content.getHeight()*content.getScaleY()<=size[1]+.01f);
+                assertEquals(content.getScaleX(),content.getScaleY(),.0001f);
+            }
+        }
+    }
+
     @Test public void increasedSystemFontDoesNotChangeTheDesktopCanvas() {
         RuntimeEnvironment.setFontScale(2f);
         try (ActivityController<Activity> controller = Robolectric.buildActivity(Activity.class).setup()) {

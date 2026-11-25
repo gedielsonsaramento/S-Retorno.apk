@@ -9,9 +9,6 @@ import android.content.ActivityNotFoundException;
 import android.provider.Settings;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.media.AudioAttributes;
-import android.media.AudioFormat;
-import android.media.AudioTrack;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Build;
@@ -55,6 +52,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     public static final String KEY_HTML_URL = "html_url";
     public static final String KEY_HTML_STAGE_LAYOUT = "html_stage_layout";
     public static final String KEY_HTML_COMPATIBILITY = "html_compatibility";
+    public static final String KEY_HTML_LIGHT = "html_light";
 
     // Shared queues preserve connect/cleanup ordering across Activity recreation.
     private static final ExecutorService CAPTURE_WORKER = Executors.newSingleThreadExecutor();
@@ -109,9 +107,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private int videoWidth;
     private int videoHeight;
     private WifiManager.MulticastLock multicastLock;
-    private AudioTrack audioTrack;
-    private int audioSampleRate;
-    private int audioChannels;
+    private final PcmPlayback audioPlayer = NdiAudioPlayer.create();
     private View menuButton;
     private int safeInsetLeft;
     private int safeInsetRight;
@@ -161,7 +157,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             @Override public void onInteraction() { showControls(); }
         });
         htmlMonitor.setDisplayLayout(preferences.getBoolean(KEY_HTML_STAGE_LAYOUT, true),
-                preferences.getBoolean(KEY_HTML_COMPATIBILITY, Build.VERSION.SDK_INT <= 25));
+                preferences.getBoolean(KEY_HTML_COMPATIBILITY, Build.VERSION.SDK_INT <= 25),
+                preferences.getBoolean(KEY_HTML_LIGHT, false));
         localControl = new LocalControl(this, new LocalControl.Host() {
             @Override public org.json.JSONObject status() throws Exception { return localStatus(); }
             @Override public org.json.JSONObject sources() throws Exception { return localSources(); }
@@ -197,7 +194,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         videoSurface.setOnClickListener(v -> showControls());
         videoContainer.setOnClickListener(v -> showControls());
         menuButton.setOnClickListener(v -> toggleSourcePanel());
-        findViewById(R.id.close_panel_button).setOnClickListener(v -> closeSourcePanel());
+        findViewById(R.id.close_panel_button).setOnClickListener(v -> exitApp());
         scanButton.setOnClickListener(v -> {
             discoveryRequested = true;
             scanSources();
@@ -589,13 +586,16 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
                     .setTitle(R.string.html_layout_title)
                     .setSingleChoiceItems(R.array.html_layouts,
                             !preferences.getBoolean(KEY_HTML_STAGE_LAYOUT, true) ? 1
+                                    : preferences.getBoolean(KEY_HTML_LIGHT, false) ? 3
                                     : preferences.getBoolean(KEY_HTML_COMPATIBILITY, Build.VERSION.SDK_INT <= 25) ? 2 : 0,
                             (dialog, which) -> {
                                 boolean stage = which != 1;
                                 boolean compatibility = which == 2;
+                                boolean light = which == 3;
                                 preferences.edit().putBoolean(KEY_HTML_STAGE_LAYOUT, stage)
-                                        .putBoolean(KEY_HTML_COMPATIBILITY, compatibility).apply();
-                                htmlMonitor.setDisplayLayout(stage, compatibility);
+                                        .putBoolean(KEY_HTML_COMPATIBILITY, compatibility)
+                                        .putBoolean(KEY_HTML_LIGHT, light).apply();
+                                htmlMonitor.setDisplayLayout(stage, compatibility, light);
                                 updateHtmlLayoutButton(layoutButton);
                                 dialog.dismiss();
                             }).setNegativeButton(android.R.string.cancel, null).create();
@@ -628,8 +628,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         address.setText(initial);
         spresenterDialog = new AlertDialog.Builder(this).setTitle(R.string.spresenter_api_title)
                 .setView(form).setNegativeButton(android.R.string.cancel, null).create();
+        form.findViewById(R.id.spresenter_auto_search).setOnClickListener(v -> startCatalogSearch());
         form.findViewById(R.id.spresenter_pairing_button).setOnClickListener(v -> showSpresenterPairing());
         form.findViewById(R.id.spresenter_link_save).setOnClickListener(v -> {
+            if (link.getText().toString().trim().isEmpty()) {startCatalogSearch();return;}
             try { saveSpresenterConnection(SpresenterConnection.fromEditorLink(link.getText().toString())); }
             catch (IllegalArgumentException invalid) { link.setError(getString(R.string.spresenter_editor_link_invalid)); }
         });
@@ -782,6 +784,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private void updateHtmlLayoutButton(TextView button) {
         button.setText(getString(R.string.html_layout_button, getString(
                 !preferences.getBoolean(KEY_HTML_STAGE_LAYOUT, true) ? R.string.html_layout_page
+                        : preferences.getBoolean(KEY_HTML_LIGHT, false) ? R.string.html_layout_light
                         : preferences.getBoolean(KEY_HTML_COMPATIBILITY, Build.VERSION.SDK_INT <= 25)
                                 ? R.string.html_layout_compatibility : R.string.html_layout_monitor)));
     }
@@ -854,6 +857,35 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         stopDiscoveryPolling();
         sourcePanel.setVisibility(View.GONE);
         hideControls.run();
+    }
+
+    private void exitApp() {
+        closeSourcePanel();
+        Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+        android.content.pm.ResolveInfo selected = getPackageManager().resolveActivity(home,
+                android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+        if (selected != null && selected.activityInfo != null &&
+                getPackageName().equals(selected.activityInfo.packageName)) {
+            // If S-Retorno is the Home app, finishing alone immediately opens it
+            // again. Give the explicit exit to another installed Home screen.
+            List<Intent> alternatives = new ArrayList<>();
+            for (android.content.pm.ResolveInfo candidate : getPackageManager().queryIntentActivities(home, 0)) {
+                if (candidate.activityInfo == null || getPackageName().equals(candidate.activityInfo.packageName)) continue;
+                alternatives.add(new Intent(home).setClassName(candidate.activityInfo.packageName,
+                        candidate.activityInfo.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            }
+            try {
+                if (alternatives.size() == 1) startActivity(alternatives.get(0));
+                else if (alternatives.size() > 1) {
+                    Intent chooser = Intent.createChooser(alternatives.remove(0), getString(R.string.exit_home_title));
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, alternatives.toArray(new Intent[0]));
+                    startActivity(chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } else startActivity(new Intent(Settings.ACTION_HOME_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            } catch (ActivityNotFoundException unavailable) { /* Ending the task is still safe. */ }
+        }
+        // End this task instead of just covering the source list. onStop/onDestroy
+        // release HTML audio/video, NDI, discovery and the local management server.
+        finishAndRemoveTask();
     }
 
     private void showControls() {
@@ -991,6 +1023,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private void startNdiPlayback() {
         String source = currentNdiSource;
         receiverStats.reset();
+        audioPlayer.start(source);
         int generation = ++playbackGeneration;
         ndiPlaybackRequested = true;
         CAPTURE_WORKER.execute(() -> {
@@ -1033,10 +1066,11 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
 
     @SuppressWarnings("unused")
-    public void onNativePerformance(String source, long captured, long dropped, int queued) {
+    public void onNativePerformance(String source, long captured, long dropped, int queued,
+                                    long rendered, long superseded, long renderMicros) {
         runOnUiThread(() -> {
             if (!destroyed && activityVisible && !htmlMode && currentNdiSource.equals(source))
-                receiverStats.accept(captured, dropped, queued, SystemClock.elapsedRealtime());
+                receiverStats.accept(captured, dropped, queued, rendered, superseded, renderMicros, SystemClock.elapsedRealtime());
         });
     }
 
@@ -1051,6 +1085,10 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         org.json.JSONObject playback = htmlMode ? new org.json.JSONObject().put("state", htmlMonitor.state())
                 : receiverStats.json(SystemClock.elapsedRealtime()).put("width", videoWidth)
                         .put("height", videoHeight).put("source_fps", sourceFps);
+        if (!htmlMode) {
+            long[] audio = audioPlayer.stats();
+            playback.put("audio_queue_ms", audio[0]).put("audio_dropped_frames", audio[1]).put("audio_write_errors", audio[2]);
+        }
         return new org.json.JSONObject().put("mode", htmlMode ? "html" : "ndi")
                 .put("source", label == null ? "" : label).put("playback", playback);
     }
@@ -1161,50 +1199,12 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     }
 
     @SuppressWarnings("unused")
-    public synchronized void onNativeAudio(short[] pcm, int sampleRate, int channels) {
-        if (destroyed || htmlMode || !activityVisible || pcm == null || pcm.length == 0) return;
-        if (audioTrack == null || audioSampleRate != sampleRate || audioChannels != channels) {
-            configureAudio(sampleRate, channels);
-        }
-        if (audioTrack != null) {
-            audioTrack.write(pcm, 0, pcm.length, AudioTrack.WRITE_NON_BLOCKING);
-        }
+    public void onNativeAudio(String source, short[] pcm, int sampleRate, int channels) {
+        if (!destroyed && !htmlMode && activityVisible && currentNdiSource.equals(source))
+            audioPlayer.offer(source, pcm, sampleRate, channels);
     }
 
-    private synchronized void configureAudio(int sampleRate, int channels) {
-        releaseAudio();
-        int channelMask = channels <= 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
-        int minimum = AudioTrack.getMinBufferSize(sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT);
-        if (minimum <= 0) return;
-        audioTrack = new AudioTrack.Builder()
-                .setAudioAttributes(new AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
-                        .build())
-                .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(channelMask)
-                        .build())
-                .setBufferSizeInBytes(minimum * 3)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build();
-        audioTrack.play();
-        audioSampleRate = sampleRate;
-        audioChannels = channels;
-    }
-
-    private synchronized void releaseAudio() {
-        if (audioTrack != null) {
-            try {
-                audioTrack.pause();
-                audioTrack.flush();
-                audioTrack.release();
-            } catch (IllegalStateException ignored) {
-            }
-            audioTrack = null;
-        }
-    }
+    private void releaseAudio() { audioPlayer.stop(); }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
@@ -1247,6 +1247,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         NdiReceiver.setCallbackTarget(null);
         releaseAudio();
         if (multicastLock != null && multicastLock.isHeld()) multicastLock.release();
+        audioPlayer.close();
         super.onDestroy();
     }
 }

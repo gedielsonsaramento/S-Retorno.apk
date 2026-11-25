@@ -12,10 +12,16 @@ final class HtmlStageViewport extends ViewGroup {
     static final int CSS_WIDTH = 1920;
     static final int CSS_HEIGHT = 1080;
     private final boolean stageLayout;
+    private final boolean light;
 
     HtmlStageViewport(Context context, View renderer, boolean stageLayout) {
+        this(context,renderer,stageLayout,false);
+    }
+
+    HtmlStageViewport(Context context, View renderer, boolean stageLayout, boolean light) {
         super(context);
         this.stageLayout = stageLayout;
+        this.light = light;
         setBackgroundColor(Color.BLACK);
         addView(renderer, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
     }
@@ -27,8 +33,8 @@ final class HtmlStageViewport extends ViewGroup {
         int height = MeasureSpec.getSize(heightSpec);
         setMeasuredDimension(width, height);
         float density = getChildAt(0).getResources().getDisplayMetrics().density;
-        int childWidth = stageLayout ? Math.max(1, Math.round(CSS_WIDTH * density)) : width;
-        int childHeight = stageLayout ? Math.max(1, Math.round(CSS_HEIGHT * density)) : height;
+        int childWidth = stageLayout ? Math.max(1, Math.round((light ? 1280 : CSS_WIDTH) * density)) : width;
+        int childHeight = stageLayout ? Math.max(1, Math.round((light ? 720 : CSS_HEIGHT) * density)) : height;
         getChildAt(0).measure(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.EXACTLY));
     }

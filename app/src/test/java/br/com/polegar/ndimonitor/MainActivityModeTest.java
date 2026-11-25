@@ -238,7 +238,7 @@ public class MainActivityModeTest {
             org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(30));
             assertEquals(initial + 1, FakeHtmlDiscovery.starts);
             FakeHtmlDiscovery.listener.onFinished();
-            activity.findViewById(R.id.close_panel_button).performClick();
+            activity.onBackPressed();
             org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(30));
             assertEquals(initial + 1, FakeHtmlDiscovery.starts);
         }
@@ -439,4 +439,28 @@ public class MainActivityModeTest {
             assertEquals(View.GONE, controller.get().findViewById(R.id.source_panel).getVisibility());
         }
     }
+    @Test @Config(sdk = {23, 25, 35})
+    public void exitButtonEndsTaskAndKeepsSavedSourceForNextOpening() {
+        android.content.SharedPreferences prefs = RuntimeEnvironment.getApplication()
+                .getSharedPreferences(MainActivity.PREFERENCES, Context.MODE_PRIVATE);
+        String address = "http://192.168.2.57:5050/output/retorno";
+        prefs.edit().clear().putString(MainActivity.KEY_DISPLAY_MODE, "html")
+                .putString(MainActivity.KEY_HTML_URL, address).commit();
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+            MainActivity activity = controller.get();
+            activity.onBackPressed();
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.source_panel).getVisibility());
+            activity.findViewById(R.id.close_panel_button).performClick();
+            assertTrue(activity.isFinishing());
+            controller.pause().stop();
+            assertEquals(0, ((android.view.ViewGroup) activity.findViewById(R.id.html_container)).getChildCount());
+            assertEquals(address, prefs.getString(MainActivity.KEY_HTML_URL, ""));
+        }
+        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class).setup()) {
+            assertFalse(controller.get().isFinishing());
+            assertEquals(View.VISIBLE, controller.get().findViewById(R.id.html_container).getVisibility());
+            assertEquals(address, prefs.getString(MainActivity.KEY_HTML_URL, ""));
+        }
+    }
+
 }
