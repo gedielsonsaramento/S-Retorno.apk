@@ -1,0 +1,3 @@
+35b8fe401da69343be036bdf1dd7e369758be96b4e126d19f901b5cdf274f895  S-Retorno-1.5.5-Fluidez-RC1.apk
+55e0042915b294e52fbbc630d88e1752f42614e63fe50248c76795376cf2439b  S-Retorno-Central-0.1.5.zip
+0be2e85f459196d6cf40b6fdcbf122a0de93cf4fa8d5929b98452e5f8fc19f83  S-Retorno-1.5.5-Fluidez-RC1-Fontes.zip
